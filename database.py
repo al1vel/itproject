@@ -34,3 +34,5 @@ time_from INTEGER,
 time_to INTEGER
 )
 ''')
+
+cursor.execute('INSERT INTO Rooms_Information (room_id, room_name, Information) VALUES (0, 211, "pohui")')
