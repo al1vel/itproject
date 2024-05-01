@@ -64,17 +64,15 @@ def check(user: str):
 
 @app.get("/freerooms")
 def get_free_rooms(date: str):
-
     cursor.execute(f'SELECT room_name FROM Rooms_Information')
     all_room_names = cursor.fetchall()
-    print(all_room_names)
 
     cursor.execute(f'SELECT room_name, time_from, time_to FROM History_of_Operations WHERE date = "{date}"')
     data = cursor.fetchall()
 
     res = dict()
     for r_name in all_room_names:
-        res[r_name[0]] = [[540, 1080],]
+        res[r_name[0]] = [[540, 1080], ]
 
     for booking in data:
         r_name = booking[0]
@@ -101,14 +99,16 @@ def get_free_rooms(date: str):
                     break
         current_gaps.sort()
         res[r_name] = current_gaps
+
+    for room in res.keys():
+        temp = res[room]
+        new = []
+        for item in temp:
+            time = (f'{item[0] // 60}:{item[0] % 60 if (item[0] % 60) != 0 else "00"} - {item[1] // 60}:'
+                    f'{item[1] % 60 if (item[1] % 60) != 0 else "00"}')
+            new.append(time)
+        res[room] = new
     return res
-
-
-
-
-
-
-
 
 
 @app.post("/add_room")
