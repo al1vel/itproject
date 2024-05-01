@@ -62,18 +62,7 @@ def check(user: str):
     return res
 
 
-@app.get("/freerooms")
-def get_free_rooms(date: str):
-    cursor.execute(f'SELECT room_name FROM Rooms_Information')
-    all_room_names = cursor.fetchall()
-
-    cursor.execute(f'SELECT room_name, time_from, time_to FROM History_of_Operations WHERE date = "{date}"')
-    data = cursor.fetchall()
-
-    res = dict()
-    for r_name in all_room_names:
-        res[r_name[0]] = [[540, 1080], ]
-
+def split_time_gaps(res, data):
     for booking in data:
         r_name = booking[0]
         temp1 = booking[1].split(":")
@@ -99,7 +88,10 @@ def get_free_rooms(date: str):
                     break
         current_gaps.sort()
         res[r_name] = current_gaps
+        return res
 
+
+def format_time_to_string(res):
     for room in res.keys():
         temp = res[room]
         new = []
@@ -111,6 +103,33 @@ def get_free_rooms(date: str):
     return res
 
 
+@app.get("/freerooms")
+def get_free_rooms(date: str):
+    cursor.execute(f'SELECT room_name FROM Rooms_Information')
+    all_room_names = cursor.fetchall()
+    cursor.execute(f'SELECT room_name, time_from, time_to FROM History_of_Operations WHERE date = "{date}"')
+    data = cursor.fetchall()
+
+    res = dict()
+    for r_name in all_room_names:
+        res[r_name[0]] = [[540, 1080], ]
+    split_time_gaps(res, data)
+    format_time_to_string(res)
+    return res
+
+
 @app.post("/add_room")
 def add_room(room_name: str, inf: str):
     cursor.execute(f'INSERT INTO Rooms_Information (room_name, Information) VALUES ("{room_name}", "{inf}")')
+
+
+@app.get("/free_room")
+def get_when_room_is_free(date: str, room_name: str):
+    cursor.execute(f'SELECT room_name, time_from, time_to FROM History_of_Operations WHERE date = "{date}" AND '
+                   f'room_name = "{room_name}"')
+    data = cursor.fetchall()
+    res = dict()
+    res[room_name] = [[540, 1080], ]
+    split_time_gaps(res, data)
+    format_time_to_string(res)
+    return res
