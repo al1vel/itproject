@@ -26,7 +26,7 @@ Information TEXT NOT NULL
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS History_of_Operations (   
 operation_id INTEGER PRIMARY KEY,
-room_id INTEGER,
+room_name TEXT NOT NULL,
 type_of_operation TEXT NOT NULL,
 booker TEXT NOT NULL,
 date INTEGER,
