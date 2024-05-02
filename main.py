@@ -1,5 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 import sqlite3
+from fastapi import FastAPI, HTTPException
+from passlib.context import CryptContext
+from pydantic import BaseModel, EmailStr
 
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
 cursor = connection.cursor()
@@ -35,6 +38,18 @@ time_to TEXT NOT NULL
 ''')
 
 app = FastAPI()
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class UserRegistration(BaseModel):
+    username: str
+    password: str
+    login: str
+    email: EmailStr
 
 
 @app.get("/")
@@ -135,4 +150,61 @@ def get_when_room_is_free(date: str, room_name: str):
     return res
 
 
-print('test')
+# Хэширование пароля
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+# Функция для хэширования пароля
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+
+# Функция для аутентификации пользователя
+async def authenticate_user(email: str, password: str, cursor1):
+    cursor1.execute('SELECT * FROM Users WHERE email = ?', (email,))
+    user = cursor1.fetchone()
+    if user is None:
+        return False
+    if not pwd_context.verify(password, user[3]):
+        return False
+    return True
+
+
+@app.post("/register/")
+async def register_user(username: str, password: str, email: str, login_value: str):
+    # Проверки данных
+    if len(password) < 8:
+        raise HTTPException(status_code=400, detail="Пароль должен содержать не менее 8 символов")
+    if not any(char.isdigit() for char in password):
+        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы одну цифру")
+    if not any(char.isalpha() for char in password):
+        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы одну букву")
+    if not any(char in "!@#$%^&*()-_+=<>?/.,:;" for char in password):
+        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы один специальный символ: !@#$%^&*()-_+=<>?/.,:;")
+
+    # Проверка наличия пользователя с таким же email в базе данных
+    cursor.execute('SELECT * FROM Users WHERE email = ?', (email,))
+    existing_user = cursor.fetchone()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Пользователь с таким адресом электронной почты уже зарегистрирован")
+
+    # Хэширование пароля и добавление пользователя в базу данных
+    hashed_password = get_password_hash(password)
+    cursor.execute('INSERT INTO Users (username, password, email, login) VALUES (?, ?, ?, ?)', (username, hashed_password, email, login_value))
+    connection.commit()
+
+    # Возврат сообщения об успешной регистрации
+    return {"message": "Пользователь успешно зарегистрирован"}
+
+
+@app.post("/login/")
+async def login_user(email: str, password: str):
+    authenticated = await authenticate_user(email, password, cursor)
+    if not authenticated:
+        raise HTTPException(status_code=401, detail="Неправильный адрес электронной почты или пароль")
+
+    return {"message": "Вход успешно выполнен"}
+
+
+
+
