@@ -160,15 +160,25 @@ def get_password_hash(password):
 
 
 # Функция для аутентификации пользователя
-async def authenticate_user(email: str, password: str, cursor1):
-    cursor1.execute('SELECT * FROM Users WHERE email = ?', (email,))
+async def authenticate_user(login: str, password: str, cursor1):
+    """
+    Функция для аутентификации пользователя
+    Функция принимает электронную почту и пароль пользователя, выполняет поиск пользователя в базе данных
+    Args:
+        login:
+        password:
+        cursor1:
+
+    Returns:
+
+    """
+    cursor1.execute('SELECT * FROM Users WHERE login = ?', (login,))
     user = cursor1.fetchone()
     if user is None:
         return False
     if not pwd_context.verify(password, user[3]):
         return False
     return True
-
 
 @app.post("/register/")
 async def register_user(username: str, password: str, email: str, login_value: str):
@@ -193,7 +203,8 @@ async def register_user(username: str, password: str, email: str, login_value: s
     if not any(char.isalpha() for char in password):
         raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы одну букву")
     if not any(char in "!@#$%^&*()-_+=<>?/.,:;" for char in password):
-        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы один специальный символ: !@#$%^&*()-_+=<>?/.,:;")
+        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы один специальный символ: "
+                                                    "!@#$%^&*()-_+=<>?/.,:;")
 
     # Проверка наличия пользователя с таким же email в базе данных
     cursor.execute('SELECT * FROM Users WHERE email = ?', (email,))
@@ -203,7 +214,8 @@ async def register_user(username: str, password: str, email: str, login_value: s
 
     # Хэширование пароля и добавление пользователя в базу данных
     hashed_password = get_password_hash(password)
-    cursor.execute('INSERT INTO Users (username, password, email, login) VALUES (?, ?, ?, ?)', (username, hashed_password, email, login_value))
+    cursor.execute('INSERT INTO Users (username, password, email, login) VALUES (?, ?, ?, ?)',
+                   (username, hashed_password, email, login_value))
     connection.commit()
 
     # Возврат сообщения об успешной регистрации
@@ -211,24 +223,19 @@ async def register_user(username: str, password: str, email: str, login_value: s
 
 
 @app.post("/login/")
-async def login_user(email: str, password: str):
+async def login_user(login: str, password: str):
     """
     Функция для авторизации пользователя
-    Функция предназначена для того, чтобы аутентифицировать пользователя, используя предоставленные им электронную почту
-    и пароль
+    Функция предназначена для того, чтобы аутентифицировать пользователя, используя предоставленные им логин и пароль
     Args:
-        email:
+        login:
         password:
 
     Returns:
 
     """
-    authenticated = await authenticate_user(email, password, cursor)
+    authenticated = await authenticate_user(login, password, cursor)
     if not authenticated:
-        raise HTTPException(status_code=401, detail="Неправильный адрес электронной почты или пароль")
+        raise HTTPException(status_code=401, detail="Неправильный логин или пароль")
 
     return {"message": "Вход успешно выполнен"}
-
-
-
-
