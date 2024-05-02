@@ -172,6 +172,19 @@ async def authenticate_user(email: str, password: str, cursor1):
 
 @app.post("/register/")
 async def register_user(username: str, password: str, email: str, login_value: str):
+    """
+    Функция для регистрации пользователя
+    Функция проверяет данные пользователя, хэширует пароль, проверяет уникальность адреса электронной почты,
+    а затем добавляет нового пользователя в базу данных
+    Args:
+        username:
+        password:
+        email:
+        login_value:
+
+    Returns:
+
+    """
     # Проверки данных
     if len(password) < 8:
         raise HTTPException(status_code=400, detail="Пароль должен содержать не менее 8 символов")
@@ -199,6 +212,17 @@ async def register_user(username: str, password: str, email: str, login_value: s
 
 @app.post("/login/")
 async def login_user(email: str, password: str):
+    """
+    Функция для авторизации пользователя
+    Функция предназначена для того, чтобы аутентифицировать пользователя, используя предоставленные им электронную почту
+    и пароль
+    Args:
+        email:
+        password:
+
+    Returns:
+
+    """
     authenticated = await authenticate_user(email, password, cursor)
     if not authenticated:
         raise HTTPException(status_code=401, detail="Неправильный адрес электронной почты или пароль")
