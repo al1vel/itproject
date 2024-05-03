@@ -148,7 +148,7 @@ def get_when_room_is_free(date: str, room_name: str):
     split_time_gaps(res, data)
     format_time_to_string(res)
     return res
-
+  
 
 # Хэширование пароля
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
