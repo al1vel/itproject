@@ -1,41 +1,12 @@
-from fastapi import FastAPI, Depends
 import sqlite3
 from fastapi import FastAPI, HTTPException
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
+from database import initialize_database
 
+initialize_database()
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
 cursor = connection.cursor()
-
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS Users (
-id INTEGER PRIMARY KEY,
-username TEXT NOT NULL,
-login TEXT NOT NULL,
-password TEXT NOT NULL,
-pass_level INTEGER,
-email TEXT NOT NULL
-)
-''')
-
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS Rooms_Information (
-room_name TEXT NOT NULL,
-Information TEXT NOT NULL
-)
-''')
-
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS History_of_Operations (   
-operation_id INTEGER PRIMARY KEY,
-room_name TEXT NOT NULL,
-type_of_operation TEXT NOT NULL,
-booker TEXT NOT NULL,
-date TEXT NOT NULL,
-time_from TEXT NOT NULL,
-time_to TEXT NOT NULL
-)
-''')
 
 app = FastAPI()
 
@@ -101,12 +72,32 @@ def get_info(room_name: str):
 
 @app.get("/check")
 def check(user: str):
+    """
+    Функция для проверки бронирования
+
+    Args:
+        user: string
+
+    Returns:
+        array of values: [id, room_name, user, date, time_from, time_to]
+    """
     cursor.execute(f'SELECT * FROM History_of_Operations WHERE booker = "{user}"')
-    res = cursor.fetchall()
-    return res
+    return cursor.fetchall()
 
 
 def split_time_gaps(free_gaps, current_bookings):
+    """
+    Функция для получения свободных временных промежутков
+
+    Изначально считает каждую комнату полностью свободной. Затем убирает занятые отрезки времени.
+
+    Args:
+        free_gaps: dict, keys = room names, values = array of gaps in minutes
+        current_bookings: dict, keys = date, values = array of values [room_name, time_from, time_to]
+
+    Returns:
+        dict, keys = room names, values = array of free gaps in minutes (int)
+    """
     for booking in current_bookings:
         r_name = booking[0]
         temp1 = booking[1].split(":")
@@ -136,6 +127,15 @@ def split_time_gaps(free_gaps, current_bookings):
 
 
 def format_time_to_string(free_gaps):
+    """
+    Функция приведения промежутка времени к строке
+
+    Args:
+        free_gaps: dict, keys = room names, values = array of free gaps in minutes (int)
+
+    Returns:
+        dict, keys = room names, values = array of strings [**:** - **:**, ...]
+    """
     for room in free_gaps.keys():
         temp = free_gaps[room]
         new = []
@@ -150,12 +150,17 @@ def format_time_to_string(free_gaps):
 @app.get("/free_gaps")
 def get_free_gaps_for_rooms(date: str):
     """
-    Функция API
+    Функция API для получения свободных окон для всех комнат на конкретную дату
+
+    Функция совершает запрос в базу для получения всех броней на конкретную дату для всех комнаты. Затем помечает
+    эти промежутки недоступными, возвращая словарь, где ключами является названия комнат, а значениями - массивы строк,
+    каждая из которых содержит свободный временной промежуток.
+
     Args:
-        date:
+        date: string
 
     Returns:
-
+        dict, keys = room names, values = array of strings ["**:** - **:**, ...]
     """
     cursor.execute(f'SELECT room_name FROM Rooms_Information')
     all_room_names = cursor.fetchall()
@@ -172,11 +177,35 @@ def get_free_gaps_for_rooms(date: str):
 
 @app.post("/add_room")
 def add_room(room_name: str, inf: str):
+    """
+    Функция API, добавляющая новую комнату
+
+    Args:
+        room_name: string
+        inf: string
+
+    Returns:
+        nothing
+    """
     cursor.execute(f'INSERT INTO Rooms_Information (room_name, Information) VALUES ("{room_name}", "{inf}")')
 
 
 @app.get("/free_gaps_for_room")
 def get_free_gaps_for_one_room(date: str, room_name: str):
+    """
+    Функция API для получения свободных окон для конкретной комнаты на конкретную дату
+
+    Функция совершает запрос в базу для получения всех броней на конкретную дату для конкретной комнаты. Затем помечает
+    эти промежутки недоступными, возвращая словарь, где ключом является названия комнаты, а значением - массивы строк,
+    каждая из которых содержит свободный временной промежуток.
+
+    Args:
+        date: string
+        room_name: string
+
+    Returns:
+        dict, keys = room names, values = array of strings ["**:** - **:**, ...]
+    """
     cursor.execute(f'SELECT room_name, time_from, time_to FROM History_of_Operations WHERE date = "{date}" AND '
                    f'room_name = "{room_name}"')
     current_bookings = cursor.fetchall()
@@ -217,12 +246,15 @@ async def authenticate_user(login: str, password: str, cursor1):
         return False
     return True
 
-@app.post("/register/")
+
+@app.post("/register")
 async def register_user(username: str, password: str, email: str, login_value: str):
     """
     Функция для регистрации пользователя
+
     Функция проверяет данные пользователя, хэширует пароль, проверяет уникальность адреса электронной почты,
     а затем добавляет нового пользователя в базу данных
+
     Args:
         username:
         password:
@@ -247,7 +279,8 @@ async def register_user(username: str, password: str, email: str, login_value: s
     cursor.execute('SELECT * FROM Users WHERE email = ?', (email,))
     existing_user = cursor.fetchone()
     if existing_user:
-        raise HTTPException(status_code=400, detail="Пользователь с таким адресом электронной почты уже зарегистрирован")
+        raise HTTPException(status_code=400, detail="Пользователь с таким адресом электронной почты "
+                                                    "уже зарегистрирован")
 
     # Хэширование пароля и добавление пользователя в базу данных
     hashed_password = get_password_hash(password)
