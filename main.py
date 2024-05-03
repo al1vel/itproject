@@ -117,7 +117,7 @@ def split_time_gaps(free_gaps, current_bookings):
                     break
         current_gaps.sort()
         free_gaps[r_name] = current_gaps
-        return free_gaps
+    return free_gaps
 
 
 def format_time_to_string(free_gaps):
@@ -147,7 +147,7 @@ def get_free_gaps_for_rooms(date: str):
     cursor.execute(f'SELECT room_name, time_from, time_to FROM History_of_Operations WHERE date = "{date}"')
     current_bookings = cursor.fetchall()
 
-    free_gaps = dict()
+    free_gaps = {}
     for r_name in all_room_names:
         free_gaps[r_name[0]] = [[540, 1080], ]
     split_time_gaps(free_gaps, current_bookings)
