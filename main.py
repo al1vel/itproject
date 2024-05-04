@@ -35,14 +35,14 @@ async def root():
 
 
 @app.post("/book")
-def book(user: str, room_name: str, date: str, time_from: str, time_to: str):
+def book(login: str, room_name: str, date: str, time_from: str, time_to: str):
     """
     Функция API для бронирования комнаты.
 
     Функция создаёт бронь комнаты в базе данных в таблице "История операций".
 
     Args:
-        user: string
+        login: string
         room_name:  string
         date: string in format **.**.****
         time_from: string in format **:**
@@ -52,7 +52,7 @@ def book(user: str, room_name: str, date: str, time_from: str, time_to: str):
         nothing
     """
     cursor.execute(f'INSERT INTO History_of_Operations (room_name, type_of_operation, booker, date, time_from, time_to)'
-                   f' VALUES ("{room_name}", "booked", "{user}", "{date}", "{time_from}", "{time_to}")')
+                   f' VALUES ("{room_name}", "booked", "{login}", "{date}", "{time_from}", "{time_to}")')
 
 
 @app.get("/get_info")
@@ -71,17 +71,17 @@ def get_info(room_name: str):
 
 
 @app.get("/check")
-def check(user: str):
+def check(login: str):
     """
     Функция для проверки бронирования
 
     Args:
-        user: string
+        login: string
 
     Returns:
         array of values: [id, room_name, user, date, time_from, time_to]
     """
-    cursor.execute(f'SELECT * FROM History_of_Operations WHERE booker = "{user}"')
+    cursor.execute(f'SELECT * FROM History_of_Operations WHERE booker = "{login}"')
     return cursor.fetchall()
 
 
