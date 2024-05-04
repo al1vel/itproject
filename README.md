@@ -6,3 +6,5 @@
 ### Ссылки
 - [Доска Miro](https://miro.com/app/board/uXjVNp2awoM=/)
 - [Task Tracker](https://app.todoist.com/app/project/it-project-6V6xhPQph5Wqc943)
+
+### Установка
