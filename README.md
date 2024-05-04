@@ -8,3 +8,4 @@
 - [Task Tracker](https://app.todoist.com/app/project/it-project-6V6xhPQph5Wqc943)
 
 ### Установка
+    1. Установить необходимые зависимости [requirements.txt]
