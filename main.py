@@ -180,6 +180,7 @@ async def authenticate_user(login: str, password: str, cursor1):
         return False
     return True
 
+
 @app.post("/register/")
 async def register_user(username: str, password: str, email: str, login_value: str):
     """
@@ -211,6 +212,12 @@ async def register_user(username: str, password: str, email: str, login_value: s
     existing_user = cursor.fetchone()
     if existing_user:
         raise HTTPException(status_code=400, detail="Пользователь с таким адресом электронной почты уже зарегистрирован")
+
+    # Проверка наличия пользователя с таким же логином в базе данных
+    cursor.execute('SELECT * FROM Users WHERE login = ?', (login_value,))
+    existing_login = cursor.fetchone()
+    if existing_login:
+        raise HTTPException(status_code=400, detail="Пользователь с таким логином уже зарегистрирован")
 
     # Хэширование пароля и добавление пользователя в базу данных
     hashed_password = get_password_hash(password)
