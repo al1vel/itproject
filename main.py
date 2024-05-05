@@ -282,6 +282,12 @@ async def register_user(username: str, password: str, email: str, login_value: s
         raise HTTPException(status_code=400, detail="Пользователь с таким адресом электронной почты "
                                                     "уже зарегистрирован")
 
+    # Проверка наличия пользователя с таким же логином в базе данных
+    cursor.execute('SELECT * FROM Users WHERE login = ?', (login_value,))
+    existing_login = cursor.fetchone()
+    if existing_login:
+        raise HTTPException(status_code=400, detail="Пользователь с таким логином уже зарегистрирован")
+
     # Хэширование пароля и добавление пользователя в базу данных
     hashed_password = get_password_hash(password)
     cursor.execute('INSERT INTO Users (username, password, email, login) VALUES (?, ?, ?, ?)',
