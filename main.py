@@ -9,6 +9,7 @@ from fastapi.responses import Response
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
+
 initialize_database()
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
 cursor = connection.cursor()
