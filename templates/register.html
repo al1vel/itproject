@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="https://fonts.google.com/specimen/Jomhuria">
+        <style>
+            body{
+                background-color: #D9D9D9;
+                background-repeat: no-repeat;
+                background-size: cover;
+                background: url(static/8.png);
+            }
+
+            .title {
+                font-family: 'Jomhuria';
+                color: #000000;
+                text-align: center;
+                text-decoration: underline;
+                font-size: 20px;
+                font-weight: bold;
+            }
+
+            .button {
+                background-color: #2C3D95;
+                color: white;
+                font-family: "Times New Roman";
+                text-decoration: none;
+                padding: 1rem 1.25rem;
+                border-radius: 10rem;
+                display: inline-block;
+                letter-spacing: .15rem;
+                font-size: 1rem;
+                transition: all .3s;
+                position: relative;
+                overflow: hidden;
+                z-index: 1;
+                margin: 15px 5px 40px 7px;
+            }
+
+            .button:hover{
+                background-color: rgb(122, 137, 212);
+            }
+
+            label {
+                margin-bottom: 0.4rem;
+                display: block;
+            }
+
+            input {
+                padding: 0.4rem;
+                width: 240px;
+                border: .9px solid;
+                border-color: #2C3D95;
+                border-radius: 30px;
+            }
+
+            form div {
+                margin-top: .2rem;
+            }
+            form {
+                font-size: 15px;
+                width: 250px;
+                height: 320px;
+                border-radius: 5%;
+                background-color: rgba(107, 128, 243, 0.19);
+                padding: 30px 40px 40px 40px;
+                margin: 70px 190px;
+            }
+        </style>
+    </head>
+    <body>
+        <form action="/register" method="post">
+            <div class='title'>Форма регистрации</div>
+            <div>
+                <label for="username">Имя   </label>
+                <input type="text" id="username" name="username">
+            </div>
+            <div>
+                <label for="password">Пароль</label>
+                <input type="password" id="password" name="password">
+            </div>
+            <div>
+                <label for="email">Почта</label>
+                <input type="text" id="email" name="email">
+            </div>
+            <div>
+                <label for="login">Логин </label>
+                <input type="text" id="login" name="login">
+            </div>
+            <input class="button" type="submit" value="Зарегистрироваться">
+        </form>
+    </body>
+</html>
