@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body{
+                background-color: #D9D9D9;
+                background-repeat: no-repeat;
+                background-size: cover;
+                background-image: url('8.png');
+            }
+
+            .title {
+                font-family: "GrobFont";
+                src: local('GrobFont'),
+                    url(GrobFont.oft);
+                color: #000000;
+                text-align: center;
+                text-decoration: underline;
+                font-size: 20px;
+            }
+
+            .button {
+                background-color: #2C3D95;
+                color: white;
+                font-family: "Times New Roman";
+                text-decoration: none;
+                padding: 1rem 1.25rem;
+                border-radius: 10rem;
+                display: inline-block;
+                letter-spacing: .15rem;
+                font-size: 1rem;
+                transition: all .3s;
+                position: relative;
+                overflow: hidden;
+                z-index: 1;
+                margin: 15px 5px 40px 15px;
+
+            }
+
+            .button:hover{
+                background-color: rgb(122, 137, 212);
+            }
+
+            label {
+                margin-bottom: 0.4rem;
+                display: block;
+            }
+
+            input {
+                padding: 0.4rem;
+                width: 240px;
+                border: .9px solid;
+                border-color: #2C3D95;
+                border-radius: 30px;
+            }
+
+            form div {
+                margin-top: .2rem;
+            }
+            form {
+                font-size: 15px;
+                width: 250px;
+                height: 320px;
+                border-radius: 5%;
+                background-color: rgba(107, 128, 243, 0.19);
+                padding: 30px 40px 40px 40px;
+                margin: 70px 250px;
+            }
+        </style>
+    </head>
+    <body>
+        <img src="C:\Users\Лиза\Desktop\figma\8.png" > 
+        <form action="" method="post">
+            <div class='title'>Форма регистрации</div>
+            <div>
+                <label for="login">Логин </label>
+                <input type="text" id="login" name="login">
+            </div>
+            <div>
+                <label for="name">Имя   </label>
+                <input type="text" id="name" name="name">
+            </div>
+            <div>
+                <label for="email">Почта</label>
+                <input type="text" id="email" name="email">
+            </div>
+            <div>
+                <label for="pas">Пароль</label>
+                <input type="text" id="pas" name="pas">
+            </div>
+            <a href="" class="button">Зарегистрироваться</a>
+
+        </form>
+    </body>
+</html>
