@@ -1,12 +1,17 @@
 import sqlite3
+from fastapi import Request, Form
 from fastapi import FastAPI, HTTPException
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
 from database import initialize_database
+from fastapi.responses import HTMLResponse
+from fastapi.responses import Response
+from fastapi.templating import Jinja2Templates
 
 initialize_database()
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
 cursor = connection.cursor()
+templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
 
@@ -247,8 +252,22 @@ async def authenticate_user(login: str, password: str, cursor1):
     return True
 
 
-@app.post("/register")
-async def register_user(username: str, password: str, email: str, login_value: str):
+@app.get("/register", response_class=HTMLResponse)
+async def show_registration_form(request: Request):
+    """
+
+    Args:
+        request:
+
+    Returns:
+
+    """
+    return templates.TemplateResponse("register.html", {"request": request})
+
+
+@app.post("/register", response_class=HTMLResponse)
+async def register_user(request: Request, username: str = Form(...), password: str = Form(...), email: str = Form(...),
+                        login: str = Form(...)):
     """
     Функция для регистрации пользователя
 
@@ -256,10 +275,12 @@ async def register_user(username: str, password: str, email: str, login_value: s
     а затем добавляет нового пользователя в базу данных
 
     Args:
+        request:
+        login:
         username:
         password:
         email:
-        login_value:
+        login:
 
     Returns:
 
@@ -283,7 +304,7 @@ async def register_user(username: str, password: str, email: str, login_value: s
                                                     "уже зарегистрирован")
 
     # Проверка наличия пользователя с таким же логином в базе данных
-    cursor.execute('SELECT * FROM Users WHERE login = ?', (login_value,))
+    cursor.execute('SELECT * FROM Users WHERE login = ?', (login,))
     existing_login = cursor.fetchone()
     if existing_login:
         raise HTTPException(status_code=400, detail="Пользователь с таким логином уже зарегистрирован")
@@ -291,14 +312,13 @@ async def register_user(username: str, password: str, email: str, login_value: s
     # Хэширование пароля и добавление пользователя в базу данных
     hashed_password = get_password_hash(password)
     cursor.execute('INSERT INTO Users (username, password, email, login) VALUES (?, ?, ?, ?)',
-                   (username, hashed_password, email, login_value))
+                   (username, hashed_password, email, login))
     connection.commit()
 
-    # Возврат сообщения об успешной регистрации
-    return {"message": "Пользователь успешно зарегистрирован"}
+    return templates.TemplateResponse("register.html", {"request": request})
 
 
-@app.post("/login/")
+@app.post("/login/", response_class=HTMLResponse)
 async def login_user(login: str, password: str):
     """
     Функция для авторизации пользователя
@@ -313,5 +333,4 @@ async def login_user(login: str, password: str):
     authenticated = await authenticate_user(login, password, cursor)
     if not authenticated:
         raise HTTPException(status_code=401, detail="Неправильный логин или пароль")
-
-    return {"message": "Вход успешно выполнен"}
+    return Response(content="register.html", media_type="text/html")
