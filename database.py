@@ -20,7 +20,7 @@ def initialize_database():
     username TEXT NOT NULL,
     login TEXT NOT NULL,
     password TEXT NOT NULL,
-    pass_level INTEGER,
+    pass_level TEXT NOT NULL,
     email TEXT NOT NULL
     )
     ''')
