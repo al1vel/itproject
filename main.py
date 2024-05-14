@@ -25,7 +25,9 @@ class UserLogin(BaseModel):
 class UserRegistration(BaseModel):
     username: str
     password: str
+    doublepassword: str
     login: str
+    pass_level: str
     email: EmailStr
 
 
@@ -268,7 +270,8 @@ async def show_registration_form(request: Request):
 
 @app.post("/register", response_class=HTMLResponse)
 async def register_user(request: Request, username: str = Form(...), password: str = Form(...),
-                        doublepassword: str = Form(), email: str = Form(...), login: str = Form(...)):
+                        doublepassword: str = Form(), email: str = Form(...), pass_level: str = 'A',
+                        login: str = Form(...)):
     """
     Функция для регистрации пользователя
 
@@ -276,6 +279,8 @@ async def register_user(request: Request, username: str = Form(...), password: s
     а затем добавляет нового пользователя в базу данных
 
     Args:
+        pass_level:
+        doublepassword:
         request:
         login:
         username:
@@ -314,8 +319,8 @@ async def register_user(request: Request, username: str = Form(...), password: s
 
     # Хэширование пароля и добавление пользователя в базу данных
     hashed_password = get_password_hash(password)
-    cursor.execute('INSERT INTO Users (username, password, email, login) VALUES (?, ?, ?, ?)',
-                   (username, hashed_password, email, login))
+    cursor.execute('INSERT INTO Users (username, password, email, pass_level, login) VALUES (?, ?, ?, ?, ?)',
+                   (username, hashed_password, email, pass_level, login))
     connection.commit()
 
     return templates.TemplateResponse("register.html", {"request": request})
