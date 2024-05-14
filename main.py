@@ -7,6 +7,7 @@ from database import initialize_database
 from fastapi.responses import HTMLResponse
 from fastapi.responses import Response
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 
 initialize_database()
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
@@ -14,6 +15,7 @@ cursor = connection.cursor()
 templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 class UserLogin(BaseModel):
