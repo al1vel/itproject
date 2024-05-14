@@ -8,7 +8,6 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
-
 initialize_database()
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
 cursor = connection.cursor()
@@ -221,7 +220,7 @@ def get_free_gaps_for_one_room(date: str, room_name: str):
     split_time_gaps(free_gaps, current_bookings)
     format_time_to_string(free_gaps)
     return free_gaps
-  
+
 
 # Хэширование пароля
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -268,8 +267,8 @@ async def show_registration_form(request: Request):
 
 
 @app.post("/register", response_class=HTMLResponse)
-async def register_user(request: Request, username: str = Form(...), password: str = Form(...), email: str = Form(...),
-                        login: str = Form(...)):
+async def register_user(request: Request, username: str = Form(...), password: str = Form(...),
+                        doublepassword: str = Form(), email: str = Form(...), login: str = Form(...)):
     """
     Функция для регистрации пользователя
 
@@ -297,6 +296,8 @@ async def register_user(request: Request, username: str = Form(...), password: s
     if not any(char in "!@#$%^&*()-_+=<>?/.,:;" for char in password):
         raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы один специальный символ: "
                                                     "!@#$%^&*()-_+=<>?/.,:;")
+    if password != doublepassword:
+        raise HTTPException(status_code=400, detail="Пароли не совпадают")
 
     # Проверка наличия пользователя с таким же email в базе данных
     cursor.execute('SELECT * FROM Users WHERE email = ?', (email,))
