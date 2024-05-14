@@ -5,8 +5,9 @@ from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
 from database import initialize_database
 from fastapi.responses import HTMLResponse
-from fastapi.responses import Response
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+
 
 initialize_database()
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
@@ -14,6 +15,7 @@ cursor = connection.cursor()
 templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 class UserLogin(BaseModel):
@@ -318,12 +320,26 @@ async def register_user(request: Request, username: str = Form(...), password: s
     return templates.TemplateResponse("register.html", {"request": request})
 
 
-@app.post("/login/", response_class=HTMLResponse)
-async def login_user(login: str, password: str):
+@app.get("/login", response_class=HTMLResponse)
+async def show_login_form(request: Request):
+    """
+
+    Args:
+        request:
+
+    Returns:
+
+    """
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
+@app.post("/login", response_class=HTMLResponse)
+async def login_user(request: Request, login: str = Form(...), password: str = Form(...)):
     """
     Функция для авторизации пользователя
     Функция предназначена для того, чтобы аутентифицировать пользователя, используя предоставленные им логин и пароль
     Args:
+        request:
         login:
         password:
 
@@ -333,4 +349,5 @@ async def login_user(login: str, password: str):
     authenticated = await authenticate_user(login, password, cursor)
     if not authenticated:
         raise HTTPException(status_code=401, detail="Неправильный логин или пароль")
-    return Response(content="register.html", media_type="text/html")
+
+    return templates.TemplateResponse("login.html", {"request": request})
