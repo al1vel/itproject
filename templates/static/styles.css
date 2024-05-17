@@ -169,13 +169,13 @@ button:hover {
         align-items: flex-start;
 }
 .button-container {
-    width: 20%;
-    height: 50px;
-    display: flex;
-    margin-top: 20px;
-    justify-content: flex-end;
+        width: 20%;
+        height: 50px;
+        display: flex;
+        margin-top: 20px;
+        justify-content: flex-end;
 }
 .vertical-stack {
-    display: flex;
-    flex-direction: column;
+        display: flex;
+        flex-direction: column;
 }
