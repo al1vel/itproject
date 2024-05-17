@@ -14,7 +14,7 @@ cursor = connection.cursor()
 templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/templates/static", StaticFiles(directory="templates/static"), name="static")
 
 
 class UserLogin(BaseModel):
