@@ -17,6 +17,7 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="templates/static"), name="static")
 
 
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
