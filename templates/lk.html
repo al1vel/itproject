@@ -10,27 +10,27 @@
         <div class="header">
             <p><span class="header-text1">OFFICE </span><span class="header-text2">FIX</span></p>
         </div>
-        <div class="container">
+    <div class="container">
         <div class="profile-container">
-        <div class="user-info">
-            <div class="avatar">JD</div>
-            <div class="user-details">
-                <p>John Doe</p>
+            <div class="user-info">
+                <div class="avatar">{{ user_data[1][0].upper() }}</div>
+                <div class="user-details">
+                    <p>{{ user_data[1] }}</p>
+                </div>
+            </div>
+            <p><strong>Уровень пользователя:</strong></p>
+            <div class="user-info1">
+                <p>{{ user_data[4] }}</p>
+            </div>
+            <p><strong>Логин:</strong></p>
+            <div class="user-info1">
+                <p>{{ user_data[2] }}</p>
+            </div>
+            <p><strong>Email:</strong></p>
+            <div class="user-info1">
+                <p>{{ user_data[5] }}</p>
             </div>
         </div>
-            <p><strong> Уровень пользователя:</strong></p>
-        <div class="user-info1">
-            <p>A</p>
-        </div>
-            <p><strong> Логин:</strong></p>
-        <div class="user-info1">
-            <p>johndoe123</p>
-        </div>
-            <p><strong> Email:</strong></p>
-        <div class="user-info1">
-            <p>johndoe@example.com</p>
-        </div>
-    </div>
     <div class="vertical-stack">
     <div class="booking-container">
         <div class="active-bookings">Активные бронирования</div>
