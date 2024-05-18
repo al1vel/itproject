@@ -1,17 +1,17 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
+    background: url(фон3.png);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
 }
 
 .container {
-    width: 50%;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 100x;
+    padding: 10px;
 }
-
 h1 {
     text-align: center;
     color: #333;
@@ -76,50 +76,106 @@ button:hover {
         font-family: 'Jomhuria';
     }
 .profile-container {
-        width: 473px;
-        height: 470px;
-        border: 1px solid #E3E7FD;
+        width: 350px;
+        height: 375px;
         padding: 20px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        margin-top: 150px;
+        margin-top: 130px;
+        margin-bottom: 8px;
+        margin-left:20px;
         border-width:medium;
-        background-color: #E3E7FD;
+        background-color: rgba(227, 231, 253, 0.75);
     }
+
 .avatar {
-        width: 80px;
-        height: 80px;
+        width: 50px;
+        height: 50px;
         border-radius: 50%;
         background-color: #2C3D95;
         display: flex;
         justify-content: center;
         align-items: center;
-        font-size: 30px;
-        margin-bottom: 20px;
+        font-size: 20px;
+        margin-bottom: 13px;
         margin-left: 20px;
-        margin-top: 20px;
+        margin-top: 15px;
     }
 .user-info {
         display: flex;
         align-items: center;
-        margin-bottom: 10px;
+        margin-bottom: 3px;
         background-color: #ccc;
-        border-radius: 15px;
+        border-radius: 10px;
     }
 
 .user-info1 {
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 10px;
+        margin-bottom: 3px;
         background-color: #ccc;
-        border-radius: 15px;
+        border-radius: 10px;
+        font-size: 15px;
+
     }
 
 .user-details {
-        margin-left: 100px;
-        margin-bottom: 10px;
+        margin-left: 80px;
+        margin-bottom: 8px;
         font-weight: bold;
-        font-size: 18px;
+        font-size: 16px;
+}
+
+.booking-container {
+        width: 720px;
+        height: 270px;
+        background-color: rgba(204, 204, 204, 0.75);
+        padding: 20px;
+        margin-top: 130px;
+        margin-bottom: 8px;
+        margin-left: 110px;
+}
+.room-info {
+        width: 700px;
+        height: 90px;
+        background-color: white;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: stretch;
+}
+.booking-details {
+         width: 180px;
+         height: 69px;
+         background-color: #ccc;
+         border-radius: 5px;
+         padding: 10px;
+         display: flex;
+        }
+.active-bookings {
+         font-size: 20px;
+         font-weight: bold;
+         color: #333;
+         margin-bottom:20px;
+        }
+.name_room{
+        font-size: 17px;
+        margin-left: 20px;
+        margin-top: 15px;
+        align-items: flex-start;
+}
+.button-container {
+        width: 20%;
+        height: 50px;
+        display: flex;
+        margin-top: 20px;
+        justify-content: flex-end;
+}
+.vertical-stack {
+        display: flex;
+        flex-direction: column;
 }

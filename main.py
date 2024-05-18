@@ -14,7 +14,8 @@ cursor = connection.cursor()
 templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
-app.mount("/templates/static", StaticFiles(directory="templates/static"), name="static")
+app.mount("/static", StaticFiles(directory="templates/static"), name="static")
+
 
 
 class UserLogin(BaseModel):
@@ -357,3 +358,18 @@ async def login_user(request: Request, login: str = Form(...), password: str = F
         raise HTTPException(status_code=401, detail="Неправильный логин или пароль")
 
     return templates.TemplateResponse("login.html", {"request": request})
+
+
+@app.get("/user_info", response_class=HTMLResponse)
+async def get_user_info(request: Request, login: str):
+
+    connection = sqlite3.connect('my_database.db')
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT * FROM Users WHERE login = ?', (login,))
+    user_data = cursor.fetchone()
+
+    if user_data is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return templates.TemplateResponse("lk.html", {"request": request, "user_data": user_data})
