@@ -32,15 +32,9 @@ class UserRegistration(BaseModel):
     email: EmailStr
 
 
-@app.get("/")
-async def root():
-    """
-    Точка входа API
-
-    Returns:
-        MAIN PAGE
-    """
-    return "MAIN PAGE"
+@app.get("/", response_class=HTMLResponse)
+async def read_home(request: Request):
+    return templates.TemplateResponse("home.html", {"request": request})
 
 
 @app.post("/book")
