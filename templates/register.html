@@ -7,8 +7,11 @@
 
     </head>
     <body>
+        <div class="header">
+            <p><span class="header-text1">OFFICE </span><span class="header-text2">FIX</span></p>
+        </div>
         <form action="/register" method="post">
-            <div class='title'>Форма регистрации</div>
+            <div class='title'>Регистрация</div>
             <div>
                 <label for="username">Имя   </label>
                 <input type="text" id="username" name="username">
@@ -29,7 +32,11 @@
                 <label for="login">Логин </label>
                 <input type="text" id="login" name="login">
             </div>
-            <input class="button" type="submit" value="Зарегистрироваться">
+            <button class="button" type="submit">Зарегистрироваться</button>
+            <div class="container">
+                <span>Уже есть аккаунт? </span>
+                <a href="http://127.0.0.1:8000/login" class="button2">Войти</a>
+            </div>
         </form>
     </body>
 </html>

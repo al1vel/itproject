@@ -7,8 +7,13 @@
     </head>
 
     <body>
+        <div class="header">
+            <p><span class="header-text1">OFFICE </span><span class="header-text2">FIX</span></p>
+        </div>
         <form action="/login" method="post">
-            <span class='title'>Форма входа</span>
+            <div class="container">
+                <span class='title'>Вход</span>
+            </div>
             <div>
                 <label for="login">Логин</label>
                 <input type="text" id="login" name="login">
@@ -17,7 +22,8 @@
                 <label for="password">Пароль</label>
                 <input type="password" id="password" name="password">
             </div>
-            <input class="button" type="submit" value="Авторизоваться">
+            <button class="button" type="submit">Авторизоваться</button>
+            <span>Ещё нет аккаунта? </span>
             <a href="http://127.0.0.1:8000/register" class="button2">Зарегистрироваться</a>
         </form>
     </body>
