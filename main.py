@@ -404,3 +404,4 @@ def access_permission(type_of_operation: str, login: str):
     elif type_of_operation in ("unnbooking other user", "adding room") and role[0] < 'C':
         raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
     return "Operation is allowed"
+
