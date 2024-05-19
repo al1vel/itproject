@@ -1,0 +1,82 @@
+body {
+    background: url(фон2.png);
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.title {
+    font-family: 'Jomhuria';
+    color: #000000;
+    font-size: 30px;
+    font-weight: bold;
+    margin: 0px 0px 20px 45px;
+}
+
+.button {
+    background-color: #2C3D95;
+    color: white;
+    font-family: "Jomhuria";
+    text-decoration: none;
+    padding: 1rem 1.25rem;
+    border-radius: 10rem;
+    display: inline-block;
+    letter-spacing: .15rem;
+    font-size: 1rem;
+    transition: all .3s;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    margin: 50px 5px 10px 7px;
+}
+
+.button:hover{
+    background-color: rgb(122, 137, 212);
+}
+
+.button2 {
+    background-color: rgba(235, 235, 235, 1);
+    color: #2C3D95;
+    font-family: "Jomhuria";
+    text-decoration: none;
+    padding: .4rem 1.25rem;
+    border-radius: 6rem;
+    display: inline-block;
+    letter-spacing: .1rem;
+    transition: all .3s;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    margin: 5px 40px 5px 28px;
+}
+.button2:hover{
+    background-color: rgba(217, 217, 217, 1);
+}
+
+label {
+    margin-bottom: 0.4rem;
+    display: block;
+}
+
+input {
+    padding: 0.4rem;
+    width: 240px;
+    border: .9px solid;
+    border-color: #2C3D95;
+    border-radius: 30px;
+}
+
+form div {
+    margin-top: 1.5rem;
+}
+form {
+    font-size: 15px;
+    width: 260px;
+    height: 360px;
+    border-radius: 5%;
+    background-color: rgba(107, 128, 243, 0.19);
+    padding: 20px 40px 20px 40px;
+    position: fixed; top: 50%; left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
