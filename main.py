@@ -17,6 +17,9 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="templates/static"), name="static")
 
 
+class NotEnoughRights(HTTPException):
+    pass
+
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -60,8 +63,13 @@ def book(login: str, room_name: str, date: str, time_from: str, time_to: str):
     Returns:
         nothing
     """
+    try:
+        access_permission("booking", login)
+    except NotEnoughRights:
+        print("This User hasn`t enough rights")
+        return "This User hasn`t enough rights"
     cursor.execute(f'INSERT INTO History_of_Operations (room_name, type_of_operation, booker, date, time_from, time_to)'
-                   f' VALUES ("{room_name}", "booked", "{login}", "{date}", "{time_from}", "{time_to}")')
+                   f' VALUES ("{room_name}", "booking", "{login}", "{date}", "{time_from}", "{time_to}")')
 
 
 @app.get("/get_info")
@@ -185,17 +193,23 @@ def get_free_gaps_for_rooms(date: str):
 
 
 @app.post("/add_room")
-def add_room(room_name: str, inf: str):
+def add_room(room_name: str, inf: str, login: str):
     """
     Функция API, добавляющая новую комнату
 
     Args:
         room_name: string
         inf: string
+        login: string
 
     Returns:
         nothing
     """
+    try:
+        access_permission("adding room", login)
+    except NotEnoughRights:
+        print("This User hasn`t enough rights")
+        return "This User hasn`t enough rights"
     cursor.execute(f'INSERT INTO Rooms_Information (room_name, Information) VALUES ("{room_name}", "{inf}")')
 
 
@@ -363,9 +377,6 @@ async def login_user(request: Request, login: str = Form(...), password: str = F
 @app.get("/user_info", response_class=HTMLResponse)
 async def get_user_info(request: Request, login: str):
 
-    connection = sqlite3.connect('my_database.db')
-    cursor = connection.cursor()
-
     cursor.execute('SELECT * FROM Users WHERE login = ?', (login,))
     user_data = cursor.fetchone()
 
@@ -373,3 +384,23 @@ async def get_user_info(request: Request, login: str):
         raise HTTPException(status_code=404, detail="User not found")
 
     return templates.TemplateResponse("lk.html", {"request": request, "user_data": user_data})
+
+
+def access_permission(type_of_operation: str, login: str):
+    """
+    Функция для проверки наличия прав пользователя
+    Функция презднзначена для того, чтобы проверить, может ли пользователь совершить данную операцию
+    Args:
+        type_of_operation:
+        login:
+
+    Returns:
+    string = "Operation is allowed"
+    """
+    cursor.execute('SELECT pass_level FROM Users WHERE login = ?', (login,))
+    role = cursor.fetchone()
+    if type_of_operation in ("booking", "unnbooking") and role[0] < 'B':
+        raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
+    elif type_of_operation in ("unnbooking other user", "adding room") and role[0] < 'C':
+        raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
+    return "Operation is allowed"
