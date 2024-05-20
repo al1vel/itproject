@@ -370,14 +370,23 @@ async def login_user(request: Request, login: str = Form(...), password: str = F
 
 @app.get("/user_info", response_class=HTMLResponse)
 async def get_user_info(request: Request, login: str):
-
     cursor.execute('SELECT * FROM Users WHERE login = ?', (login,))
     user_data = cursor.fetchone()
 
     if user_data is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    return templates.TemplateResponse("lk.html", {"request": request, "user_data": user_data})
+    # Fetch active bookings for the user
+    cursor.execute('SELECT * FROM History_of_Operations WHERE booker = ? AND date >= date("now")', (login,))
+    active_bookings = cursor.fetchall()
+
+    # Fetch booking history for the user
+    cursor.execute('SELECT * FROM History_of_Operations WHERE booker = ? AND date < date("now")', (login,))
+    booking_history = cursor.fetchall()
+
+    return templates.TemplateResponse("lk.html", {"request": request, "user_data": user_data,
+                                                         "active_bookings": active_bookings,
+                                                         "booking_history": booking_history})
 
 
 def access_permission(type_of_operation: str, login: str):
@@ -398,4 +407,3 @@ def access_permission(type_of_operation: str, login: str):
     elif type_of_operation in ("unnbooking other user", "adding room") and role[0] < 'C':
         raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
     return "Operation is allowed"
-
