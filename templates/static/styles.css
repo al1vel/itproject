@@ -10,11 +10,10 @@ body {
     display:grid;
     grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: 100x;
-    padding: 10px;
+    padding: 1%;
 }
 h1 {
     text-align: center;
-    color: #333;
 }
 h2 {
     text-align: center;
@@ -22,7 +21,7 @@ h2 {
     color: #000000;
     margin-bottom: 30px;
     margin-top: 20px;
-    font-family: 'Jomhuria';
+    font-family: Arial;
 
 }
 
@@ -69,6 +68,7 @@ button:hover {
         display: flex;
         align-items: center;
         padding-left: 20px;
+        margin-bottom: 5%;
     }
 
 .header-text1 {
@@ -97,6 +97,7 @@ button:hover {
         border-width:medium;
         background-color: rgba(227, 231, 253, 0.75);
     }
+
 
 .avatar {
         width: 50px;
@@ -177,11 +178,20 @@ button:hover {
         margin-top: 15px;
         align-items: flex-start;
 }
-.button-container {
-        width: 20%;
+.button-container_br {
+        width: 10%;
         height: 50px;
         display: flex;
-        margin-top: 20px;
+        margin-right:4%;
+        margin-top:1%;
+        justify-content: flex-end;
+}
+.button-container {
+        width: 10%;
+        height: 50px;
+        display: flex;
+        margin-left:17%;
+        margin-top:1%;
         justify-content: flex-end;
 }
 .vertical-stack {
@@ -204,7 +214,7 @@ button:hover {
         font-weight: bold;
         margin-top: 40px;
         color: #000000;
-        font-family: 'Jomhuria';
+        font-family: Arial;
         margin-bottom: 20px;
 }
 .photo {
@@ -239,3 +249,182 @@ button:hover {
         margin-left: 20px;
         margin-right: 20px;
 }
+
+.opisanie-room{
+        text-align: center;
+        margin-left: 20px;
+        margin-right: 20px;
+}
+
+.header {
+            text-align: center;
+            height:10%;
+        }
+
+         .main-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 100px;
+        }
+
+        /* Стили для боковой панели */
+        .sidebar {
+            width: 30%;
+            height: 20%;
+            margin-top: 1%;
+            margin-left: 8%;
+            margin-right: 1%;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+        }
+
+        .main-content {
+            width: 9%;
+            margin-top: 1%;
+            margin-right: 35%;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+        }
+
+        /* Стили для списка комнат */
+        .rooms {
+            width: 30%;
+            padding: 20px;
+            background-color: #ccc;
+            border-radius: 10px;
+        }
+
+        /* Стили для блоков оборудования и вместимости */
+        .equipment-options,
+        .capacity-options {
+            display: none;
+            margin-bottom: 7%;
+            weight:20%;
+            height:15%;
+        }
+
+        /* Стили для календаря */
+        #calendar {
+            display: none;
+            border-collapse: collapse;
+            width: 8%;
+            margin-top: 3%;
+        }
+
+        #calendar th,
+        #calendar td {
+            border: 1px solid #dddddd;
+            text-align: center;
+            padding: 2%;
+        }
+
+        #calendar th {
+            background-color: #f2f2f2;
+        }
+
+        #calendar td {
+            cursor: pointer;
+        }
+
+        #calendar td:hover {
+            background-color: #f0f0f0;
+  }
+   .filters-calendar-container {
+            display: flex;
+            justify-content: space-between;
+            width: 40%;
+            margin: 0 auto;
+            margin-top: 0%;
+            margin-left: 5%;
+        }
+
+        .filters-calendar-container .sidebar,
+        .filters-calendar-container .main-content {
+            width: 25%;
+        }
+
+        .filters-calendar-container .sidebar {
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .filters-calendar-container .main-content {
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+#month,
+#year {
+    width: 50%;
+    padding: 1%;
+    margin-right: 2%;
+}
+
+.sidebar h3,
+.main-content h2 {
+    font-size: 14px;
+    margin-bottom: 5%;
+    margin-top: 5%;
+    text-align: center;
+}
+
+
+.equipment-options,
+.capacity-options {
+    margin-bottom: 5%;
+    width: 70%;
+}
+
+.title_main {
+    text-align: center;
+    margin-top: 6%;
+    font-size: 155%;
+    font-family: "Montserrat";
+    font-weight: bold;
+
+}
+
+.found-rooms-container {
+    width: 80%;
+    height: 400px;
+    margin: 0 auto;
+    background-color: rgba(204, 204, 204, 0.75);
+    padding: 1%;
+    text-align: center;
+    margin-top: 3%;
+
+}
+
+.found-rooms-title {
+    margin-top: 0;
+}
+.room-info_main {
+        width: 98%;
+        height: 20%;
+        background-color: white;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 3%;
+        margin-right: 5%;
+        display: flex;
+        justify-content: space-between;
+        align-items: stretch;
+}
+.name_room_main{
+        font-size: 17px;
+        margin-left: 10%;
+        margin-top: 1%;
+        align-items: flex-start;
+}
+.booking-details_main {
+         width: 18%;
+         height: 35%;
+         background-color: #ccc;
+         border-radius: 5px;
+         padding: 2%;
+         margin-left:4%;
+         display: flex;
+         text-align: center;
+        }
