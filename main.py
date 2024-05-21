@@ -398,8 +398,8 @@ async def get_user_info(request: Request, login: str):
     booking_history = cursor.fetchall()
 
     return templates.TemplateResponse("lk.html", {"request": request, "user_data": user_data,
-                                                         "active_bookings": active_bookings,
-                                                         "booking_history": booking_history})
+                                                  "active_bookings": active_bookings,
+                                                  "booking_history": booking_history})
 
 
 def access_permission(type_of_operation: str, login: str):
@@ -416,7 +416,7 @@ def access_permission(type_of_operation: str, login: str):
     cursor.execute('SELECT pass_level FROM Users WHERE login = ?', (login,))
     role = cursor.fetchone()
     if type_of_operation in ("booking", "unnbooking") and role[0] < 'B':
-        raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
+        raise NotEnoughRights(status_code=404, detail="User doesn't have enough rights")
     elif type_of_operation in ("unnbooking other user", "adding room") and role[0] < 'C':
-        raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
+        raise NotEnoughRights(status_code=404, detail="User doesn't have enough rights")
     return "Operation is allowed"

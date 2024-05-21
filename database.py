@@ -31,7 +31,7 @@ def initialize_database():
     capacity INTEGER NOT NULL,
     equipment TEXT NOT NULL,
     description TEXT NOT NULL,
-    room_image TEXT NOT NULL
+    room_image TEXT NOT NULL,
     location TEXT NOT NULL
     )
     ''')
