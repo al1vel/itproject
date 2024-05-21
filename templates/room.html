@@ -1,32 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-        <meta charset="UTF-8">
-        <link rel="stylesheet" href="templates/static/styles.css">
-        <link rel="stylesheet" href="https://fonts.google.com/specimen/Jomhuria">
-        <title>Room1</title>
-    </head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="static/styles.css">
+    <link rel="stylesheet" href="https://fonts.google.com/specimen/Jomhuria">
+    <title>{{ room_name }}</title>
+</head>
 <body>
-        <div class="header">
-            <p><span class="header-text1">OFFICE </span><span class="header-text2">FIX</span></p>
-        </div>
- <div class="container_room">
-     <p></p>
-        <div class="title_room">Room 1</div>
-        <div class="photo">
-            <img src="static/room1.jpg" alt="Room Photo" width="550">
-        </div>
-        <div class="column" style="background-color: #f0f0f0;">
-            <h2>Информация</h2>
-            <div class="info-room"><p>Площадь: </p></div>
-            <div class="info-room"><p>Вместимость: </p></div>
-            <div class="info-room"><p>Оборудование: </p></div>
+<div class="header">
+    <p><span class="header-text1">OFFICE </span><span class="header-text2">FIX</span></p>
+    <button class="button" onclick="toggleDropdown()">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+    <div id="dropdown" class="dropdown" style="display: none;">
+        <select id="pageSelect">
+            <option value="/user_info?login={{ login }}">Личный кабинет</option>
+            <option value="/">Главная страница</option>
+            {% for room in rooms %}
+            <option value="/get_info?room_name={{ room.room_name }}">{{ room.room_name }}</option>
+            {% endfor %}
+     </select>
+    </div>
+</div>
+<div class="container_room">
+    <p></p>
+    <div class="title_room">{{ room_name }}</div>
+    <div class="photo">
+        <img src="/static/{{ room_image }}" alt="Room Photo" width="70%">
+    </div>
+    <div class="column" style="background-color: #f0f0f0;">
+        <h2>Информация</h2>
+        <div class="info-room"><p>Площадь: {{ area }}кв.м</p></div>
+        <div class="info-room"><p>Вместимость: {{ capacity }}</p></div>
+        <div class="info-room"><p>Оборудование: {{ equipment }}</p></div>
+        <div class="info-room"><p>Локация: {{ location }}</p></div>
+    </div>
+    <div class="column" style="background-color: #f0f0f0;">
+        <h2>Описание</h2>
+        <div class="opisanie-room"><p>{{ description }}</p></div>
+    </div>
+</div>
+<script>
+    function toggleDropdown() {
+        var dropdown = document.getElementById('dropdown');
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
 
-        </div>
-        <div class="column" style="background-color: #f0f0f0;">
-            <h2>Описание</h2>
-            <div class="opisanie-room"><p>Наша переговорная комната — это современное пространство с уютной обстановкой и стильным дизайном. Высокие потолки, естественное освещение и комфортные мебельные решения создают идеальную атмосферу для продуктивных обсуждений. Оборудование для видеоконференций и звуковая система обеспечивают комфортную коммуникацию в любое время.</p></div>
-        </div>
- </div>
+    document.getElementById('pageSelect').addEventListener('change', function() {
+        window.location.href = this.value;
+    });
+</script>
 </body>
 </html>
