@@ -18,40 +18,65 @@
 
 <div id="dropdown" class="dropdown" style="display: none;">
      <select id="pageSelect">
-            <option value="http://127.0.0.1:8000/user_info">Личный кабинет</option>
+            <option value="/user_info?login={{ login }}">Личный кабинет</option>
             <option value="/">Главная страница</option>
-            <option value="/room">Переговорная комната</option>
+            {% for room in rooms %}
+            <option value="/get_info?room_name={{ room.room_name }}">{{ room.room_name }}</option>
+            {% endfor %}
      </select>
 </div></div>
 <h1 class="title_main">Переговорные комнаты</h1>
 <div class="filters-calendar-container">
-    <div class="sidebar">
-        <h3>Фильтры</h3>
-        <button onclick="toggleFilters()">Показать фильтры</button>
-        <div class="equipment-options">
-            <label for="equipment">Оборудование:</label>
-            <select id="equipment" multiple>
-                <option value="Телевизор">Телевизор</option>
-                <option value="Проектор">Проектор</option>
-                <!-- Другие варианты оборудования -->
-            </select>
-        </div>
-        <div class="capacity-options">
-            <label for="capacity">Вместимость:</label>
-            <select id="capacity">
-                <option value="1-10">1-10</option>
-                <option value="11-15">11-15</option>
-                <option value="16-25">16-25</option>
-                <option value="26-40">26-40</option>
-            </select>
-        </div>
-        <button onclick="applyFilters()">Применить</button>
+   <div class="sidebar">
+    <main_text_f>Фильтры</main_text_f>
+    <div class="filter-controls">
+        <p><div class="filter-column">
+            <button onclick="toggleFilters()">Показать фильтры</button>
+        </div></p>
+        <p><div class="filter-column">
+            <button onclick="applyFilters()">Применить</button>
+        </div></p>
     </div>
-
-    <div class="main-content">
-        <h2>Календарь</h2>
-        <div>
+    <div class="filter-options">
+        <div class="filter-column">
+            <div class="equipment-options">
+                <label for="equipment">Оборудование:</label>
+                <select id="equipment" multiple>
+                    <option value="Телевизор">Телевизор</option>
+                    <option value="Проектор">Проектор</option>
+                    <!-- Другие варианты оборудования -->
+                </select>
+            </div>
+        </div>
+        <div class="filter-column">
+            <div class="capacity-options">
+                <label for="capacity">Вместимость:</label>
+                <select id="capacity">
+                    <option value="1-10">1-10</option>
+                    <option value="11-15">11-15</option>
+                    <option value="16-25">16-25</option>
+                    <option value="26-40">26-40</option>
+                </select>
+            </div>
+        </div>
+        <div class="filter-column">
+            <div class="loc-options">
+                <label for="loc">Локации:</label>
+                <select id="loc">
+                    <option value="Пункт А">Пункт А</option>
+                    <option value="Пункт В">Пункт В</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+   <div class="main-content">
+    <main_text_f>Календарь</main_text_f>
+    <div class="calendar-controls">
+        <div class="control-column">
             <button onclick="toggleCalendar()">Открыть календарь</button>
+        </div>
+        <div class="control-column_mon">
             <label for="month">Месяц:</label>
             <select id="month" onchange="updateCalendar()">
                 <option value="0">Январь</option>
@@ -67,26 +92,32 @@
                 <option value="10">Ноябрь</option>
                 <option value="11">Декабрь</option>
             </select>
+        </div>
+        <div class="control-column_year">
             <label for="year">Год:</label>
             <input type="number" id="year" onchange="updateCalendar()">
         </div>
-
-        <table id="calendar">
-            <thead>
-            <tr>
-                <th>Пн</th>
-                <th>Вт</th>
-                <th>Ср</th>
-                <th>Чт</th>
-                <th>Пт</th>
-                <th>Сб</th>
-                <th>Вс</th>
-            </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
     </div>
-</div>
+
+    <table id="calendar">
+        <thead>
+        <tr>
+            <th>Пн</th>
+            <th>Вт</th>
+            <th>Ср</th>
+            <th>Чт</th>
+            <th>Пт</th>
+            <th>Сб</th>
+            <th>Вс</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+   </div>
+ <div class="search-container">
+    <input type="text" id="roomNameInput" placeholder="Введите название комнаты">
+    <button onclick="searchRooms()">Поиск</button>
+</div></div>
     <div class="found-rooms-container">
     <h2 class="found-rooms-title">Найденные комнаты</h2>
         <div class="room-info_main">
@@ -173,16 +204,20 @@
         createCalendar(currentYear, currentMonth);
 
         function toggleFilters() {
-        var equipmentOptions = document.querySelector('.equipment-options');
-        var capacityOptions = document.querySelector('.capacity-options');
-        if (equipmentOptions.style.display === 'none' || equipmentOptions.style.display === '') {
-            equipmentOptions.style.display = 'block';
-            capacityOptions.style.display = 'block';
-        } else {
-            equipmentOptions.style.display = 'none';
-            capacityOptions.style.display = 'none';
-        }
+    var equipmentOptions = document.querySelector('.equipment-options');
+    var capacityOptions = document.querySelector('.capacity-options');
+    var locOptions = document.querySelector('.loc-options');
+    if (equipmentOptions.style.display === 'none' || equipmentOptions.style.display === '') {
+        equipmentOptions.style.display = 'block';
+        capacityOptions.style.display = 'block';
+        locOptions.style.display = 'block';
+    } else {
+        equipmentOptions.style.display = 'none';
+        capacityOptions.style.display = 'none';
+        locOptions.style.display = 'none';
     }
+}
+
 
         function applyFilters() {
             // Логика применения фильтров

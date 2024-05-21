@@ -88,7 +88,8 @@ def get_info(request: Request, room_name: str):
         "capacity": room_info[2],
         "equipment": room_info[3],
         "description": room_info[4],
-        "room_image": room_info[5]  # Путь к изображению комнаты
+        "room_image": room_info[5],
+        "location": room_info[6]
     }
     return templates.TemplateResponse("room_info.html", {"request": request, **room_data})
 

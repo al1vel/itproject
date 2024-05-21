@@ -16,23 +16,26 @@
     </button>
     <div id="dropdown" class="dropdown" style="display: none;">
         <select id="pageSelect">
-            <option value="/user_info">Личный кабинет</option>
+            <option value="/user_info?login={{ login }}">Личный кабинет</option>
             <option value="/">Главная страница</option>
-            <option value="/room">Переговорная комната</option>
-        </select>
+            {% for room in rooms %}
+            <option value="/get_info?room_name={{ room.room_name }}">{{ room.room_name }}</option>
+            {% endfor %}
+     </select>
     </div>
 </div>
 <div class="container_room">
     <p></p>
     <div class="title_room">{{ room_name }}</div>
     <div class="photo">
-        <img src="/static/{{ room_image }}" alt="Room Photo" width="550">
+        <img src="/static/{{ room_image }}" alt="Room Photo" width="70%">
     </div>
     <div class="column" style="background-color: #f0f0f0;">
         <h2>Информация</h2>
         <div class="info-room"><p>Площадь: {{ area }}кв.м</p></div>
         <div class="info-room"><p>Вместимость: {{ capacity }}</p></div>
         <div class="info-room"><p>Оборудование: {{ equipment }}</p></div>
+        <div class="info-room"><p>Локация: {{ location }}</p></div>
     </div>
     <div class="column" style="background-color: #f0f0f0;">
         <h2>Описание</h2>
