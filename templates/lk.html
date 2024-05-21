@@ -51,14 +51,14 @@
             {% for booking in active_bookings %}
             <div class="room-info">
                 <div class="name_room">
-                    <p>{{ booking[1] }}</p>
+                    <p>{{ booking[2] }}</p>
                 </div>
                 <div class="booking-details">
-                    <p>Дата: {{ booking[3] }}</p>
-                    <p>Время: {{ booking[4] }} - {{ booking[5] }}</p>
+                    <p>Дата: {{ booking[4] }}</p>
+                    <p>Время: {{ booking[5] }} - {{ booking[6] }}</p>
                 </div>
                 <div class="button-container">
-                    <button onclick="redirectToDetails('{{ booking[1] }}', '{{ booking[3] }}', '{{ booking[4] }}')">Подробнее</button>
+                    <button onclick="redirectToDetails('{{ booking[4] }}', '{{ booking[5] }}', '{{ booking[6] }}')">Подробнее</button>
                 </div>
             </div>
             {% endfor %}
@@ -68,11 +68,11 @@
             {% for booking in booking_history %}
             <div class="room-info">
                 <div class="name_room">
-                    <p>{{ booking[1] }}</p>
+                    <p>{{ booking[2] }}</p>
                 </div>
                 <div class="booking-details">
-                    <p>Дата: {{ booking[3] }}</p>
-                    <p>Время: {{ booking[4] }} - {{ booking[5] }}</p>
+                    <p>Дата: {{ booking[4] }}</p>
+                    <p>Время: {{ booking[5] }} - {{ booking[6] }}</p>
                 </div>
                 <div class="button-container">
                     <button onclick="redirectToDetails('{{ booking[1] }}', '{{ booking[3] }}', '{{ booking[4] }}')">Подробнее</button>

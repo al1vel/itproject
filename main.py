@@ -389,17 +389,20 @@ async def get_user_info(request: Request, login: str):
     if user_data is None:
         raise HTTPException(status_code=404, detail="User not found")
 
+    # Form the name of the history table dynamically based on the login
+    history_table_name = f'History_of_Operations_{user_data[0]}'  # Assuming user_data[0] is the operation_id
+
     # Fetch active bookings for the user
-    cursor.execute('SELECT * FROM History_of_Operations WHERE booker = ? AND date >= date("now")', (login,))
+    cursor.execute(f'SELECT * FROM {history_table_name} WHERE date >= date("now")')
     active_bookings = cursor.fetchall()
 
     # Fetch booking history for the user
-    cursor.execute('SELECT * FROM History_of_Operations WHERE booker = ? AND date < date("now")', (login,))
+    cursor.execute(f'SELECT * FROM {history_table_name} WHERE date < date("now")')
     booking_history = cursor.fetchall()
 
     return templates.TemplateResponse("lk.html", {"request": request, "user_data": user_data,
-                                                         "active_bookings": active_bookings,
-                                                         "booking_history": booking_history})
+                                                  "active_bookings": active_bookings,
+                                                  "booking_history": booking_history})
 
 
 def access_permission(type_of_operation: str, login: str):
