@@ -26,8 +26,12 @@ def initialize_database():
 
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS Rooms_Information (
-    room_name TEXT NOT NULL,
-    Information TEXT NOT NULL
+    room_name TEXT NOT NULL PRIMARY KEY,
+    area FLOAT NOT NULL,
+    capacity INTEGER NOT NULL,
+    equipment TEXT NOT NULL,
+    description TEXT NOT NULL,
+    room_image TEXT NOT NULL
     )
     ''')
 

@@ -9,11 +9,20 @@
 </head>
 <body style="background-image: url('static/фон5.png'); background-attachment: fixed;">
     <div class="header">
-        <p>
-            <span class="header-text1">OFFICE </span>
-            <span class="header-text2">FIX</span>
-        </p>
-    </div>
+            <p><span class="header-text1">OFFICE </span><span class="header-text2">FIX</span></p>
+            <button class="button" onclick="toggleDropdown()">
+    <span></span>
+    <span></span>
+    <span></span>
+    </button>
+
+<div id="dropdown" class="dropdown" style="display: none;">
+     <select id="pageSelect">
+            <option value="http://127.0.0.1:8000/user_info">Личный кабинет</option>
+            <option value="/">Главная страница</option>
+            <option value="/room">Переговорная комната</option>
+     </select>
+</div></div>
 <h1 class="title_main">Переговорные комнаты</h1>
 <div class="filters-calendar-container">
     <div class="sidebar">
@@ -178,6 +187,15 @@
         function applyFilters() {
             // Логика применения фильтров
         }
+    function toggleDropdown() {
+        var dropdown = document.getElementById('dropdown');
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
+
+    document.getElementById('pageSelect').addEventListener('change', function() {
+        window.location.href = this.value;
+    });
+
     </script>
     </body>
 </html>
