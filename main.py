@@ -66,19 +66,32 @@ def book(login: str, room_name: str, date: str, time_from: str, time_to: str):
                    f' VALUES ("{room_name}", "booking", "{login}", "{date}", "{time_from}", "{time_to}")')
 
 
-@app.get("/get_info")
-def get_info(room_name: str):
+@app.get("/get_info", response_class=HTMLResponse)
+def get_info(request: Request, room_name: str):
     """
     Функция API, получающая информацию о комнате.
 
     Args:
+        request:
         room_name: string
 
     Returns:
-        array of strings
+        HTML страницу с информацией о комнате
     """
-    cursor.execute(f'SELECT Information FROM Rooms_information WHERE room_name = "{room_name}"')
-    return cursor.fetchall()
+    cursor.execute(f'SELECT * FROM Rooms_information WHERE room_name = "{room_name}"')
+    room_info = cursor.fetchone()
+    if room_info is None:
+        raise HTTPException(status_code=404, detail=f"Room '{room_name}' not found")
+    room_data = {
+        "room_name": room_info[0],
+        "area": room_info[1],
+        "capacity": room_info[2],
+        "equipment": room_info[3],
+        "description": room_info[4],
+        "room_image": room_info[5],
+        "location": room_info[6]
+    }
+    return templates.TemplateResponse("room_info.html", {"request": request, **room_data})
 
 
 @app.get("/check")
@@ -370,14 +383,23 @@ async def login_user(request: Request, login: str = Form(...), password: str = F
 
 @app.get("/user_info", response_class=HTMLResponse)
 async def get_user_info(request: Request, login: str):
-
     cursor.execute('SELECT * FROM Users WHERE login = ?', (login,))
     user_data = cursor.fetchone()
 
     if user_data is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    return templates.TemplateResponse("lk.html", {"request": request, "user_data": user_data})
+    # Fetch active bookings for the user
+    cursor.execute('SELECT * FROM History_of_Operations WHERE booker = ? AND date >= date("now")', (login,))
+    active_bookings = cursor.fetchall()
+
+    # Fetch booking history for the user
+    cursor.execute('SELECT * FROM History_of_Operations WHERE booker = ? AND date < date("now")', (login,))
+    booking_history = cursor.fetchall()
+
+    return templates.TemplateResponse("lk.html", {"request": request, "user_data": user_data,
+                                                         "active_bookings": active_bookings,
+                                                         "booking_history": booking_history})
 
 
 def access_permission(type_of_operation: str, login: str):
@@ -398,4 +420,3 @@ def access_permission(type_of_operation: str, login: str):
     elif type_of_operation in ("unnbooking other user", "adding room") and role[0] < 'C':
         raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
     return "Operation is allowed"
-

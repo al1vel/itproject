@@ -1,69 +1,96 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <link rel="stylesheet" href="static/styles.css">
-        <link rel="stylesheet" href="https://fonts.google.com/specimen/Jomhuria">
-        <title>Personal Area</title>
-    </head>
-    <body>
-        <div class="header">
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="static/styles.css">
+    <link rel="stylesheet" href="https://fonts.google.com/specimen/Jomhuria">
+    <title>Личный кабинет</title>
+</head>
+<body style="background-image: url('static/фон4.png'); background-attachment: fixed;">
+<div class="header">
             <p><span class="header-text1">OFFICE </span><span class="header-text2">FIX</span></p>
-        </div>
-    <div class="container">
-        <div class="profile-container">
-            <div class="user-info">
-                <div class="avatar">{{ user_data[1][0].upper() }}</div>
-                <div class="user-details">
-                    <p>{{ user_data[1] }}</p>
-                </div>
-            </div>
-            <p><strong>Уровень пользователя:</strong></p>
-            <div class="user-info1">
-                <p>{{ user_data[4] }}</p>
-            </div>
-            <p><strong>Логин:</strong></p>
-            <div class="user-info1">
-                <p>{{ user_data[2] }}</p>
-            </div>
-            <p><strong>Email:</strong></p>
-            <div class="user-info1">
-                <p>{{ user_data[5] }}</p>
-            </div>
-        </div>
-    <div class="vertical-stack">
-    <div class="booking-container">
-        <div class="active-bookings">Активные бронирования</div>
-    <div class="room-info">
-    <div class="name_room">
-      <p>Название комнаты</p>
-    </div>
-        <div class="booking-details">
-            <p>Дата: 29.05.2024</p>
-            <p>Время: 13:00</p>
-        </div>
-        <div class="button-container">
-        <button onclick="redirectToDetails()">Подробнее</button>
-        </div>
-        </div>
-            </div>
+            <button class="button" onclick="toggleDropdown()">
+    <span></span>
+    <span></span>
+    <span></span>
+    </button>
 
-    <div class="booking-container">
-        <div class="active-bookings">История бронирований</div>
+<div id="dropdown" class="dropdown" style="display: none;">
+    <select id="pageSelect">
+            <option value="/user_info?login={{ login }}">Личный кабинет</option>
+            <option value="/">Главная страница</option>
+            {% for room in rooms %}
+            <option value="/get_info?room_name={{ room.room_name }}">{{ room.room_name }}</option>
+            {% endfor %}
+     </select>
+</div></div>
+<div class="container">
+    <div class="profile-container">
+        <div class="user-info">
+            <div class="avatar">{{ user_data[1][0].upper() }}</div>
+            <div class="user-details">
+                <p>{{ user_data[1] }}</p>
+            </div>
+        </div>
+        <p><strong>Уровень пользователя:</strong></p>
+        <div class="user-info1">
+            <p>{{ user_data[4] }}</p>
+        </div>
+        <p><strong>Логин:</strong></p>
+        <div class="user-info1">
+            <p>{{ user_data[2] }}</p>
+        </div>
+        <p><strong>Email:</strong></p>
+        <div class="user-info1">
+            <p>{{ user_data[5] }}</p>
+        </div>
+    </div>
+    <div class="vertical-stack">
+        <div class="booking-container">
+            <div class="active-bookings">Активные бронирования</div>
+            {% for booking in active_bookings %}
             <div class="room-info">
                 <div class="name_room">
-                <p>Название комнаты</p>
+                    <p>{{ booking[1] }}</p>
                 </div>
-                    <div class="booking-details">
-                        <p>Дата: 29.05.2024</p>
-                        <p>Время: 13:00</p>
-                    </div>
-                        <div class="button-container">
-                            <button onclick="redirectToDetails()">Подробнее</button>
-                         </div>
+                <div class="booking-details">
+                    <p>Дата: {{ booking[3] }}</p>
+                    <p>Время: {{ booking[4] }} - {{ booking[5] }}</p>
+                </div>
+                <div class="button-container">
+                    <button onclick="redirectToDetails('{{ booking[1] }}', '{{ booking[3] }}', '{{ booking[4] }}')">Подробнее</button>
+                </div>
             </div>
+            {% endfor %}
+        </div>
+        <div class="booking-container">
+            <div class="active-bookings">История бронирований</div>
+            {% for booking in booking_history %}
+            <div class="room-info">
+                <div class="name_room">
+                    <p>{{ booking[1] }}</p>
+                </div>
+                <div class="booking-details">
+                    <p>Дата: {{ booking[3] }}</p>
+                    <p>Время: {{ booking[4] }} - {{ booking[5] }}</p>
+                </div>
+                <div class="button-container">
+                    <button onclick="redirectToDetails('{{ booking[1] }}', '{{ booking[3] }}', '{{ booking[4] }}')">Подробнее</button>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </div>
+<script>
+    function toggleDropdown() {
+        var dropdown = document.getElementById('dropdown');
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
+
+    document.getElementById('pageSelect').addEventListener('change', function() {
+        window.location.href = this.value;
+    });
+</script>
     </body>
 </html>

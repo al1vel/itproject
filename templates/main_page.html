@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="static/styles.css">
+    <link rel="stylesheet" href="https://fonts.google.com/specimen/Jomhuria">
+    <link rel="stylesheet" href="https://fonts.google.com/specimen/Montserrat">
+    <title>Main page</title>
+</head>
+<body style="background-image: url('static/фон5.png'); background-attachment: fixed;">
+    <div class="header">
+            <p><span class="header-text1">OFFICE </span><span class="header-text2">FIX</span></p>
+            <button class="button" onclick="toggleDropdown()">
+    <span></span>
+    <span></span>
+    <span></span>
+    </button>
+
+<div id="dropdown" class="dropdown" style="display: none;">
+     <select id="pageSelect">
+            <option value="/user_info?login={{ login }}">Личный кабинет</option>
+            <option value="/">Главная страница</option>
+            {% for room in rooms %}
+            <option value="/get_info?room_name={{ room.room_name }}">{{ room.room_name }}</option>
+            {% endfor %}
+     </select>
+</div></div>
+<h1 class="title_main">Переговорные комнаты</h1>
+<div class="filters-calendar-container">
+   <div class="sidebar">
+    <main_text_f>Фильтры</main_text_f>
+    <div class="filter-controls">
+        <p><div class="filter-column">
+            <button onclick="toggleFilters()">Показать фильтры</button>
+        </div></p>
+        <p><div class="filter-column">
+            <button onclick="applyFilters()">Применить</button>
+        </div></p>
+    </div>
+    <div class="filter-options">
+        <div class="filter-column">
+            <div class="equipment-options">
+                <label for="equipment">Оборудование:</label>
+                <select id="equipment" multiple>
+                    <option value="Телевизор">Телевизор</option>
+                    <option value="Проектор">Проектор</option>
+                    <!-- Другие варианты оборудования -->
+                </select>
+            </div>
+        </div>
+        <div class="filter-column">
+            <div class="capacity-options">
+                <label for="capacity">Вместимость:</label>
+                <select id="capacity">
+                    <option value="1-10">1-10</option>
+                    <option value="11-15">11-15</option>
+                    <option value="16-25">16-25</option>
+                    <option value="26-40">26-40</option>
+                </select>
+            </div>
+        </div>
+        <div class="filter-column">
+            <div class="loc-options">
+                <label for="loc">Локации:</label>
+                <select id="loc">
+                    <option value="Пункт А">Пункт А</option>
+                    <option value="Пункт В">Пункт В</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+   <div class="main-content">
+    <main_text_f>Календарь</main_text_f>
+    <div class="calendar-controls">
+        <div class="control-column">
+            <button onclick="toggleCalendar()">Открыть календарь</button>
+        </div>
+        <div class="control-column_mon">
+            <label for="month">Месяц:</label>
+            <select id="month" onchange="updateCalendar()">
+                <option value="0">Январь</option>
+                <option value="1">Февраль</option>
+                <option value="2">Март</option>
+                <option value="3">Апрель</option>
+                <option value="4">Май</option>
+                <option value="5">Июнь</option>
+                <option value="6">Июль</option>
+                <option value="7">Август</option>
+                <option value="8">Сентябрь</option>
+                <option value="9">Октябрь</option>
+                <option value="10">Ноябрь</option>
+                <option value="11">Декабрь</option>
+            </select>
+        </div>
+        <div class="control-column_year">
+            <label for="year">Год:</label>
+            <input type="number" id="year" onchange="updateCalendar()">
+        </div>
+    </div>
+
+    <table id="calendar">
+        <thead>
+        <tr>
+            <th>Пн</th>
+            <th>Вт</th>
+            <th>Ср</th>
+            <th>Чт</th>
+            <th>Пт</th>
+            <th>Сб</th>
+            <th>Вс</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+   </div>
+ <div class="search-container">
+    <input type="text" id="roomNameInput" placeholder="Введите название комнаты">
+    <button onclick="searchRooms()">Поиск</button>
+</div></div>
+    <div class="found-rooms-container">
+    <h2 class="found-rooms-title">Найденные комнаты</h2>
+        <div class="room-info_main">
+                <div class="name_room_main">
+                <p>Название комнаты</p>
+                </div>
+                    <div class="booking-details_main">
+                        <p>Время: 13:00-14:00</p>
+                    </div>
+                        <div class="button-container">
+                            <button onclick="redirectToDetails()">Подробнее</button></div>
+                            <div class="button-container_br"><button onclick="bookRoom()">Забронировать</button>
+                         </div>
+            </div>
+         <div class="room-info_main">
+                <div class="name_room_main">
+                <p>Название комнаты</p>
+                </div>
+                    <div class="booking-details_main">
+                        <p>Время: 13:00-14:00</p>
+                    </div>
+                        <div class="button-container">
+                            <button onclick="redirectToDetails()">Подробнее</button></div>
+                            <div class="button-container_br"><button onclick="bookRoom()">Забронировать</button>
+                         </div>
+            </div>
+</div>
+    <script>
+        function createCalendar(year, month) {
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDay = firstDay.getDay();
+
+            const tableBody = document.querySelector('#calendar tbody');
+            tableBody.innerHTML = '';
+
+            let date = 1;
+
+            for (let i = 0; i < 6; i++) {
+                const row = document.createElement('tr');
+
+                for (let j = 0; j < 7; j++) {
+                    if (i === 0 && j < startingDay) {
+                        const cell = document.createElement('td');
+                        row.appendChild(cell);
+                    } else if (date > daysInMonth) {
+                        break;
+                    } else {
+                        const cell = document.createElement('td');
+                        cell.textContent = date;
+                        cell.addEventListener('click', () => {
+                            alert(`Выбрана дата: ${year}-${month + 1}-${date}`);
+                        });
+                        row.appendChild(cell);
+                        date++;
+                    }
+                }
+
+                tableBody.appendChild(row);
+            }
+        }
+
+        function toggleCalendar() {
+            const calendar = document.getElementById('calendar');
+            if (calendar.style.display === 'none' || calendar.style.display === '') {
+                calendar.style.display = 'table'; // изменяем на 'table'
+            } else {
+                calendar.style.display = 'none';
+            }
+        }
+
+        function updateCalendar() {
+            const month = parseInt(document.getElementById('month').value);
+            const year = parseInt(document.getElementById('year').value);
+            createCalendar(year, month);
+        }
+
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+        document.getElementById('year').value = currentYear;
+        document.getElementById('month').value = currentMonth;
+        createCalendar(currentYear, currentMonth);
+
+        function toggleFilters() {
+    var equipmentOptions = document.querySelector('.equipment-options');
+    var capacityOptions = document.querySelector('.capacity-options');
+    var locOptions = document.querySelector('.loc-options');
+    if (equipmentOptions.style.display === 'none' || equipmentOptions.style.display === '') {
+        equipmentOptions.style.display = 'block';
+        capacityOptions.style.display = 'block';
+        locOptions.style.display = 'block';
+    } else {
+        equipmentOptions.style.display = 'none';
+        capacityOptions.style.display = 'none';
+        locOptions.style.display = 'none';
+    }
+}
+
+
+        function applyFilters() {
+            // Логика применения фильтров
+        }
+    function toggleDropdown() {
+        var dropdown = document.getElementById('dropdown');
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
+
+    document.getElementById('pageSelect').addEventListener('change', function() {
+        window.location.href = this.value;
+    });
+
+    </script>
+    </body>
+</html>
