@@ -11,7 +11,7 @@ import sqlite3
 
 
 def initialize_database():
-    connection = sqlite3.connect('my_database1.db', check_same_thread=False)
+    connection = sqlite3.connect('my_database.db', check_same_thread=False)
     cursor = connection.cursor()
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS Users (
