@@ -108,7 +108,7 @@ def fill_history_of_operations_table(cursor, num_users=10):
             "SELECT login FROM Users WHERE pass_level = ? ORDER BY RANDOM() LIMIT 1", (pass_level,)).fetchone()
         if booker:
             booker_name = booker[0]  # Получаем имя пользователя
-        date = (datetime.now() + timedelta(days=random.choice([-1, 1]) * fake.random_number(digits=2))).strftime('%Y.%m.%d')
+        date = (datetime.now() + timedelta(days=random.choice([-1, 1]) * fake.random_number(digits=2))).strftime('%Y-%m-%d')
         time_from = fake.time()
         time_to = fake.time()
         cursor.execute(
