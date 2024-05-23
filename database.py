@@ -31,7 +31,7 @@ def initialize_database():
     capacity INTEGER NOT NULL,
     equipment TEXT NOT NULL,
     description TEXT NOT NULL,
-    room_image TEXT NOT NULL
+    room_image TEXT NOT NULL,
     location TEXT NOT NULL
     )
     ''')
@@ -41,8 +41,6 @@ def initialize_database():
     operation_id INTEGER PRIMARY KEY,
     room_name TEXT NOT NULL,
     type_of_operation TEXT NOT NULL,
-    booker TEXT NOT NULL,
-    date TEXT NOT NULL,
     time_from TEXT NOT NULL,
     time_to TEXT NOT NULL
     )

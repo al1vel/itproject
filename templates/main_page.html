@@ -19,7 +19,7 @@
 <div id="dropdown" class="dropdown" style="display: none;">
      <select id="pageSelect">
             <option value="/user_info?login={{ login }}">Личный кабинет</option>
-            <option value="/">Главная страница</option>
+            <option value="/">Выход</option>
             {% for room in rooms %}
             <option value="/get_info?room_name={{ room.room_name }}">{{ room.room_name }}</option>
             {% endfor %}
