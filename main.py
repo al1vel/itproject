@@ -198,6 +198,60 @@ def format_time_to_string(free_gaps):
     return free_gaps
 
 
+def conjunction_of_list(*lists):
+    res = []
+    for ls in lists:
+        for el in ls:
+            flag = 1
+            for list1 in lists:
+                if el not in list1:
+                    flag = 0
+            if flag == 1:
+                res.append(el)
+    res = set(res)
+    return list(res)
+
+
+@app.get("/filter")
+def filter_rooms(capacity=0, location="", eq_proj="", eq_board=""):
+
+    if capacity != 0:
+        cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE capacity >= "{capacity}"')
+        capacity_names = cursor.fetchall()
+    else:
+        capacity_names = []
+
+    if location != "":
+        cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE location = "{location}"')
+        location_names = cursor.fetchall()
+    else:
+        location_names = []
+
+    if eq_proj == "NO":
+        cursor.execute(f'SELECT room_name FROM Rooms_Information')
+        eq_proj_names = cursor.fetchall()
+    else:
+        cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE eq_proj = "{eq_proj}"')
+        eq_proj_names = cursor.fetchall()
+
+    if eq_proj == "NO":
+        cursor.execute(f'SELECT room_name FROM Rooms_Information')
+        eq_board_names = cursor.fetchall()
+    else:
+        cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE eq_board = "{eq_board}"')
+        eq_board_names = cursor.fetchall()
+
+    if ((len(capacity_names) == 0) or (len(location_names) == 0) or (len(eq_proj_names) == 0) or
+            (len(eq_board_names) == 0)):
+        all_room_names = []
+    elif ((len(capacity_names) != 0) and (len(location_names) != 0) and (len(eq_proj_names) != 0) and
+            (len(eq_board_names) != 0)):
+        all_room_names = conjunction_of_list(capacity_names, location_names, eq_proj_names, eq_board_names)
+    else:
+        return "PIZDEC"
+    return all_room_names
+
+
 @app.get("/free_gaps")
 def get_free_gaps_for_rooms(date: str, capacity=0, location="", eq_proj="", eq_board=""):
     """
@@ -217,44 +271,7 @@ def get_free_gaps_for_rooms(date: str, capacity=0, location="", eq_proj="", eq_b
         dict, keys = room names, values = array of strings ["**:** - **:**, ...]
     """
 
-    if capacity != 0:
-        cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE capacity >= "{capacity}"')
-        capacity_names = cursor.fetchall()
-    else:
-        capacity_names = []
-    if location != "":
-        cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE location = "{location}"')
-        location_names = cursor.fetchall()
-    else:
-        location_names = []
-    if eq_proj != 0:
-        cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE eq_proj = "{eq_proj}"')
-        eq_proj_names = cursor.fetchall()
-    else:
-        eq_proj_names = []
-    if eq_board != 0:
-        cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE eq_board = "{eq_board}"')
-        eq_board_names = cursor.fetchall()
-    else:
-        eq_board_names = []
-
-    if (not capacity_names) or (not location_names) or (not eq_proj_names) or (not eq_board_names):
-        cursor.execute(f'SELECT room_name FROM Rooms_Information')
-        room_names = cursor.fetchall()
-        all_room_names = []
-        for r_name in room_names:
-            all_room_names.append(r_name[0])
-    else:
-        all_room_names = []
-        for r_name in capacity_names:
-            all_room_names.append(r_name[0])
-        for r_name in location_names:
-            all_room_names.append(r_name[0])
-        for r_name in eq_proj_names:
-            all_room_names.append(r_name[0])
-        for r_name in eq_board_names:
-            all_room_names.append(r_name[0])
-    all_room_names = set(all_room_names)
+    all_room_names = filter_rooms(capacity, location, eq_proj, eq_board)
 
     cursor.execute(f'SELECT room_name, time_from, time_to FROM History_of_Operations WHERE date = "{date}"')
     current_bookings = cursor.fetchall()
