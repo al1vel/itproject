@@ -7,6 +7,7 @@ from database import initialize_database
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+import matplotlib.pyplot as plt
 
 initialize_database()
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
@@ -609,3 +610,61 @@ def show_calendar(request: Request, date: str):
     free_rooms = get_free_gaps_for_rooms(date)
 
     return templates.TemplateResponse("main_page.html", {"request": request})
+
+
+@app.get("/graph")
+def show_graphics(month: str):
+    months = {"January": "01",
+              "February": "02",
+              "March": "03",
+              "April": "04",
+              "May": "05",
+              "June": "06",
+              "July": "07",
+              "August": "08",
+              "September": "09",
+              "October": "10",
+              "November": "11",
+              "December": "12"
+              }
+    cur_mon = months[month]
+
+    if int(cur_mon) == 2:
+        x = [i for i in range(1, 30)]
+    elif int(cur_mon) % 2 == 0:
+        x = [i for i in range(1, 31)]
+    else:
+        x = [i for i in range(1, 32)]
+
+    y = []
+    for day in range(1, len(x) + 1):
+        s = str(day)
+        if len(s) == 1:
+            cur_day = f'0{s}.{cur_mon}'
+        elif len(s) == 2:
+            cur_day = f'{s}.{cur_mon}'
+        else:
+            print("TROUBLE")
+
+        free_gaps = get_free_gaps_for_rooms(cur_day)
+        all_book_time = 0
+        all_free_time = len(free_gaps.keys()) * 540
+        for room in free_gaps.keys():
+            gaps = free_gaps[room]
+            free_time = 0
+            for time in gaps:
+                time_from = time.split("-")[0]
+                time_to = time.split("-")[1]
+                time_from_int = int(time_from.split(":")[0]) * 60 + int(time_from.split(":")[1])
+                time_to_int = int(time_to.split(":")[0]) * 60 + int(time_to.split(":")[1])
+                free_time = free_time + (time_to_int - time_from_int)
+            book_time = 540 - free_time
+            all_book_time += book_time
+        percent = round((all_book_time / all_free_time) * 100)
+        y.append(percent)
+    plt.bar(x, y, label='Занятость')
+    plt.xlabel('День')
+    plt.ylabel('Занятость')
+    plt.title('Занятость комнат на протяжении месяца')
+    plt.legend()
+    plt.show()
