@@ -86,7 +86,6 @@ def get_info(request: Request, room_name: str):
         "room_name": room_info[0],
         "area": room_info[1],
         "capacity": room_info[2],
-        "equipment": room_info[3],
         "description": room_info[5],
         "room_image": room_info[6],
         "location": room_info[7]
