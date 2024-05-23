@@ -108,10 +108,19 @@ def fill_history_of_operations_table(cursor, num_users=10):
             "SELECT login FROM Users WHERE pass_level = ? ORDER BY RANDOM() LIMIT 1", (pass_level,)).fetchone()
         if booker:
             booker_name = booker[0]  # Получаем имя пользователя
-        date = (datetime.now() + timedelta(days=random.choice([-1, 1]) * fake.random_number(digits=2)))\
-            .strftime('%Y-%m-%d')
-        time_from = fake.time()
-        time_to = fake.time()
+        date = ((datetime.now() + timedelta(days=random.choice([-1, 1]) * fake.random_number(digits=2))).
+                strftime('%d.%m.%Y'))
+        while True:
+            time_from = fake.time()[0:5]
+            if 8 <= int(time_from[0:2]) <= 17:
+                break
+        while True:
+            time_to = fake.time()[0:5]
+            if 19 > int(time_to[0:2]) > int(time_from[0:2]):
+                break
+            elif int(time_to[0:2] == time_from[0:2]):
+                if int(time_to[3:5] > time_from[3:5]):
+                    break
         cursor.execute(
             "INSERT INTO History_of_Operations (room_name, type_of_operation, booker, date, time_from, "
             "time_to) VALUES ("
