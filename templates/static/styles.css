@@ -520,3 +520,25 @@ main_text_f{
 .search-container button:hover {
     background-color: #0056b3;
 }
+#pageSelect {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: transparent;
+  border: none;
+  padding: 5% 2%;
+  font-size: 1.0vw;
+  cursor: pointer;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+#pageSelect option {
+  background-color: #fff;
+  color: #333;
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+}
+#pageSelect option:hover {
+  background-color: #f0f0f0;
+}
