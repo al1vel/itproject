@@ -66,6 +66,32 @@ def book(login: str, room_name: str, date: str, time_from: str, time_to: str):
                    f' VALUES ("{room_name}", "booking", "{login}", "{date}", "{time_from}", "{time_to}")')
 
 
+@app.delete("/unnbook")
+def unnbook(login: str, operation_id: int):
+    """
+    Функция API для отмены бронирования комнаты.
+
+    Функция удаляет бронь комнаты из базе данных в таблице "История операций".
+
+    Args:
+        login: string
+        operation_id:  int
+
+    Returns:
+        nothing
+    """
+    try:
+        cursor.execute(f'SELECT booker FROM Rooms_information WHERE operation_id = ?', (operation_id, ))
+        if login == cursor.fetchall():
+            access_permission("unnbooking", login)
+        else:
+            access_permission("unnbooking other user", login)
+    except NotEnoughRights:
+        print("This User hasn`t enough rights")
+        return "This User hasn`t enough rights"
+    cursor.execute(f'DELETE FROM History_of_Operations WHERE operation_id = ?', (operation_id, ))
+
+
 @app.get("/get_info", response_class=HTMLResponse)
 def get_info(request: Request, room_name: str):
     """
@@ -405,6 +431,7 @@ async def get_user_info(request: Request, login: str):
     return templates.TemplateResponse("lk.html", {"request": request, "user_data": user_data,
                                                   "active_bookings": active_bookings,
                                                   "booking_history": booking_history, "room_data": room_data})
+
 
 def access_permission(type_of_operation: str, login: str):
     """
