@@ -588,3 +588,19 @@ def access_permission(type_of_operation: str, login: str):
     elif type_of_operation in ("unnbooking other user", "adding room") and role[0] < 'C':
         raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
     return "Operation is allowed"
+
+
+# @app.get("/calendar", response_class=HTMLResponse)
+# def show_calendar(request: Request, date: str):
+#     free_rooms = get_free_gaps_for_rooms(date)
+#     room_data = {
+#         "room_name": room_info[0],
+#         "area": room_info[1],
+#         "capacity": room_info[2],
+#         "eq_proj": room_info[3],
+#         "eq_board": room_info[4],
+#         "description": room_info[5],
+#         "room_image": room_info[6],
+#         "location": room_info[7]
+#     }
+#     return templates.TemplateResponse("main_page.html", {"request": request, **room_data})
