@@ -29,7 +29,8 @@ def initialize_database():
     room_name TEXT NOT NULL PRIMARY KEY,
     area FLOAT NOT NULL,
     capacity INTEGER NOT NULL,
-    equipment TEXT NOT NULL,
+    eq_proj TEXT NOT NULL,
+    eq_board TEXT NOT NULL,
     description TEXT NOT NULL,
     room_image TEXT NOT NULL,
     location TEXT NOT NULL

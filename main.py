@@ -112,10 +112,11 @@ def get_info(request: Request, room_name: str):
         "room_name": room_info[0],
         "area": room_info[1],
         "capacity": room_info[2],
-        "equipment": room_info[3],
-        "description": room_info[4],
-        "room_image": room_info[5],
-        "location": room_info[6]
+        "eq_proj": room_info[3],
+        "eq_board": room_info[4],
+        "description": room_info[5],
+        "room_image": room_info[6],
+        "location": room_info[7]
     }
     return templates.TemplateResponse("room.html", {"request": request, **room_data})
 
@@ -198,7 +199,7 @@ def format_time_to_string(free_gaps):
 
 
 @app.get("/free_gaps")
-def get_free_gaps_for_rooms(date: str):
+def get_free_gaps_for_rooms(date: str, capacity=0, location="", eq_proj="", eq_board=""):
     """
     Функция API для получения свободных окон для всех комнат на конкретную дату
 
@@ -208,31 +209,79 @@ def get_free_gaps_for_rooms(date: str):
 
     Args:
         date: string
-
+        capacity: int
+        location: string
+        eq_proj: string
+        eq_board: string
     Returns:
         dict, keys = room names, values = array of strings ["**:** - **:**, ...]
     """
-    cursor.execute(f'SELECT room_name FROM Rooms_Information')
-    all_room_names = cursor.fetchall()
+
+    if capacity != 0:
+        cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE capacity >= "{capacity}"')
+        capacity_names = cursor.fetchall()
+    else:
+        capacity_names = []
+    if location != "":
+        cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE location = "{location}"')
+        location_names = cursor.fetchall()
+    else:
+        location_names = []
+    if eq_proj != 0:
+        cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE eq_proj = "{eq_proj}"')
+        eq_proj_names = cursor.fetchall()
+    else:
+        eq_proj_names = []
+    if eq_board != 0:
+        cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE eq_board = "{eq_board}"')
+        eq_board_names = cursor.fetchall()
+    else:
+        eq_board_names = []
+
+    if (not capacity_names) or (not location_names) or (not eq_proj_names) or (not eq_board_names):
+        cursor.execute(f'SELECT room_name FROM Rooms_Information')
+        room_names = cursor.fetchall()
+        all_room_names = []
+        for r_name in room_names:
+            all_room_names.append(r_name[0])
+    else:
+        all_room_names = []
+        for r_name in capacity_names:
+            all_room_names.append(r_name[0])
+        for r_name in location_names:
+            all_room_names.append(r_name[0])
+        for r_name in eq_proj_names:
+            all_room_names.append(r_name[0])
+        for r_name in eq_board_names:
+            all_room_names.append(r_name[0])
+    all_room_names = set(all_room_names)
+
     cursor.execute(f'SELECT room_name, time_from, time_to FROM History_of_Operations WHERE date = "{date}"')
     current_bookings = cursor.fetchall()
 
     free_gaps = {}
     for r_name in all_room_names:
-        free_gaps[r_name[0]] = [[540, 1080], ]
+        free_gaps[r_name] = [[540, 1080], ]
     split_time_gaps(free_gaps, current_bookings)
     format_time_to_string(free_gaps)
     return free_gaps
 
 
 @app.post("/add_room")
-def add_room(room_name: str, inf: str, login: str):
+def add_room(room_name: str, login: str, area: float, capacity: int, inf: str, img: str, loc: str, eq_proj="NO",
+             eq_board="NO"):
     """
     Функция API, добавляющая новую комнату
 
     Args:
         room_name: string
-        inf: string
+        area: float
+        capacity: int
+        inf: string. Contains description of the room
+        img: string. Contains link to image
+        loc: string. Location of the room
+        eq_proj: "YES" or "NO" if projector exists or not
+        eq_board: "YES" or "NO" if board exists or not
         login: string
 
     Returns:
@@ -243,7 +292,9 @@ def add_room(room_name: str, inf: str, login: str):
     except NotEnoughRights:
         print("This User hasn`t enough rights")
         return "This User hasn`t enough rights"
-    cursor.execute(f'INSERT INTO Rooms_Information (room_name, Information) VALUES ("{room_name}", "{inf}")')
+    cursor.execute(f'INSERT INTO Rooms_Information (room_name, area, capacity, description, room_image, '
+                   f'location, eq_proj, eq_board) VALUES ("{room_name}", "{area}", "{capacity}", "{inf}", "{img}", '
+                   f'"{loc}", "{eq_proj}", "{eq_board}")')
 
 
 @app.get("/free_gaps_for_room")
