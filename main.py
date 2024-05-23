@@ -21,6 +21,18 @@ class NotEnoughRights(HTTPException):
     pass
 
 
+class TooManyParticipants(HTTPException):
+    pass
+
+
+class ThisTimeHasAlreadyBeenBooked(HTTPException):
+    pass
+
+
+class ThereIsNoNecessaryEquipment(HTTPException):
+    pass
+
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
@@ -41,7 +53,7 @@ async def read_home(request: Request):
 
 
 @app.post("/book")
-def book(login: str, room_name: str, date: str, time_from: str, time_to: str):
+def book(login: str, room_name: str, date: str, time_from: str, time_to: str, number_of_participants: int):
     """
     Функция API для бронирования комнаты.
 
@@ -53,17 +65,74 @@ def book(login: str, room_name: str, date: str, time_from: str, time_to: str):
         date: string in format **.**.****
         time_from: string in format **:**
         time_to: string in format **:**
-
+        number_of_participants: int
     Returns:
         nothing
     """
     try:
         access_permission("booking", login)
+        capacity_check(room_name, number_of_participants)
+        the_list_of_free_time = get_free_gaps_for_one_room(date, room_name)[room_name]
+        time_check(the_list_of_free_time, time_from, time_to)
     except NotEnoughRights:
-        print("This User hasn`t enough rights")
-        return "This User hasn`t enough rights"
+        print("This User doesn`t have enough rights")
+        return "This User doesn`t have enough rights"
+    except TooManyParticipants:
+        print("Too many participants")
+        return "Too many participants"
+    except ThisTimeHasAlreadyBeenBooked:
+        print("The meeting room is occupied at this time")
+        return "The meeting room is occupied at this time"
+    except ThereIsNoNecessaryEquipment:
+        print("There is no necessary equipment")
+        return "There is no necessary equipment"
     cursor.execute(f'INSERT INTO History_of_Operations (room_name, type_of_operation, booker, date, time_from, time_to)'
                    f' VALUES ("{room_name}", "booking", "{login}", "{date}", "{time_from}", "{time_to}")')
+    return "The room has been successfully booked"
+
+
+def capacity_check(room_name, number_of_participants):
+    """
+    Функция для проверки вместимости.
+
+    Функция сравнивает вместимость комнаты с количеством поданных человек
+
+    Args:
+        room_name:  string
+        number_of_participants: int
+    Returns:
+        nothing
+    """
+    cursor.execute(f'SELECT capacity FROM Rooms_Information WHERE room_name = "{room_name}"')
+    capacity = cursor.fetchall()[0]
+    if capacity < number_of_participants:
+        raise TooManyParticipants
+
+
+def time_check(the_list_of_free_time, time_from, time_to):
+    """
+    Функция для проверки времени.
+
+    Функция проверяет свободна ли комната в поданный определённый промежуток времени
+
+    Args:
+        the_list_of_free_time: list
+        time_from: string
+        time_to: string
+    Returns:
+        nothing
+    """
+    fl = 0
+    for time in the_list_of_free_time:
+        time = time.replace(' ', '').replace(':', ' ').replace('-', '')
+        hours_from_free, min_from_free, hours_to_free, min_to_free = map(int, time.split())
+        hours_from, min_from = map(int, time_from.split(':'))
+        hours_to, min_to = map(int, time_to.split(':'))
+        if (hours_from_free <= hours_from and min_from_free <= min_from and hours_to_free >= hours_to
+                and min_to_free >= min_to):
+            fl = 1
+    if fl == 0:
+        raise ThisTimeHasAlreadyBeenBooked
 
 
 @app.delete("/unnbook")
