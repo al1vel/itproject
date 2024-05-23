@@ -294,47 +294,50 @@ def conjunction_of_list(*lists):
 
 
 @app.get("/filter")
-def filter_rooms(capacity=0, location="", eq_proj="", eq_board=""):
+def filter_rooms(capacity=0, location=None, eq_proj=None, eq_board=None):
 
-    if capacity != 0:
-        cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE capacity >= "{capacity}"')
-        capacity_names = cursor.fetchall()
-    else:
-        capacity_names = []
+    cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE capacity >= "{capacity}"')
+    capacity_names = cursor.fetchall()
 
-    if location != "":
+    if location is not None:
         cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE location = "{location}"')
         location_names = cursor.fetchall()
     else:
-        location_names = []
+        cursor.execute(f'SELECT room_name FROM Rooms_Information')
+        location_names = cursor.fetchall()
 
-    if eq_proj == "NO":
+    if eq_proj is not None:
+        if eq_proj == "NO":
+            cursor.execute(f'SELECT room_name FROM Rooms_Information')
+            eq_proj_names = cursor.fetchall()
+        else:
+            cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE eq_proj = "{eq_proj}"')
+            eq_proj_names = cursor.fetchall()
+    else:
         cursor.execute(f'SELECT room_name FROM Rooms_Information')
         eq_proj_names = cursor.fetchall()
-    else:
-        cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE eq_proj = "{eq_proj}"')
-        eq_proj_names = cursor.fetchall()
 
-    if eq_proj == "NO":
+    if eq_board is not None:
+        if eq_board == "NO":
+            cursor.execute(f'SELECT room_name FROM Rooms_Information')
+            eq_board_names = cursor.fetchall()
+        else:
+            cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE eq_board = "{eq_board}"')
+            eq_board_names = cursor.fetchall()
+    else:
         cursor.execute(f'SELECT room_name FROM Rooms_Information')
         eq_board_names = cursor.fetchall()
-    else:
-        cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE eq_board = "{eq_board}"')
-        eq_board_names = cursor.fetchall()
 
-    if ((len(capacity_names) == 0) or (len(location_names) == 0) or (len(eq_proj_names) == 0) or
-            (len(eq_board_names) == 0)):
-        all_room_names = []
-    elif ((len(capacity_names) != 0) and (len(location_names) != 0) and (len(eq_proj_names) != 0) and
-            (len(eq_board_names) != 0)):
-        all_room_names = conjunction_of_list(capacity_names, location_names, eq_proj_names, eq_board_names)
+    all_room_names = conjunction_of_list(capacity_names, location_names, eq_proj_names, eq_board_names)
+    if len(all_room_names) > 0:
+        all_rn = all_room_names[0]
     else:
-        return "PIZDEC"
-    return all_room_names
+        all_rn = []
+    return all_rn
 
 
 @app.get("/free_gaps")
-def get_free_gaps_for_rooms(date: str, capacity=0, location="", eq_proj="", eq_board=""):
+def get_free_gaps_for_rooms(date: str, capacity=0, location=None, eq_proj=None, eq_board=None):
     """
     Функция API для получения свободных окон для всех комнат на конкретную дату
 
@@ -353,16 +356,18 @@ def get_free_gaps_for_rooms(date: str, capacity=0, location="", eq_proj="", eq_b
     """
 
     all_room_names = filter_rooms(capacity, location, eq_proj, eq_board)
+    if len(all_room_names) > 0:
+        cursor.execute(f'SELECT room_name, time_from, time_to FROM History_of_Operations WHERE date = "{date}"')
+        current_bookings = cursor.fetchall()
 
-    cursor.execute(f'SELECT room_name, time_from, time_to FROM History_of_Operations WHERE date = "{date}"')
-    current_bookings = cursor.fetchall()
-
-    free_gaps = {}
-    for r_name in all_room_names:
-        free_gaps[r_name] = [[540, 1080], ]
-    split_time_gaps(free_gaps, current_bookings)
-    format_time_to_string(free_gaps)
-    return free_gaps
+        free_gaps = dict()
+        for r_name in all_room_names:
+            free_gaps[r_name] = [[540, 1080], ]
+        split_time_gaps(free_gaps, current_bookings)
+        format_time_to_string(free_gaps)
+        return free_gaps
+    else:
+        return "NO SUCH ROOM"
 
 
 @app.post("/add_room")
@@ -599,17 +604,8 @@ def access_permission(type_of_operation: str, login: str):
     return "Operation is allowed"
 
 
-# @app.get("/calendar", response_class=HTMLResponse)
-# def show_calendar(request: Request, date: str):
-#     free_rooms = get_free_gaps_for_rooms(date)
-#     room_data = {
-#         "room_name": room_info[0],
-#         "area": room_info[1],
-#         "capacity": room_info[2],
-#         "eq_proj": room_info[3],
-#         "eq_board": room_info[4],
-#         "description": room_info[5],
-#         "room_image": room_info[6],
-#         "location": room_info[7]
-#     }
-#     return templates.TemplateResponse("main_page.html", {"request": request, **room_data})
+@app.get("/calendar", response_class=HTMLResponse)
+def show_calendar(request: Request, date: str):
+    free_rooms = get_free_gaps_for_rooms(date)
+
+    return templates.TemplateResponse("main_page.html", {"request": request})
