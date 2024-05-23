@@ -73,6 +73,7 @@ def book(login: str, room_name: str, date: str, time_from: str, time_to: str, nu
         access_permission("booking", login)
         capacity_check(room_name, number_of_participants)
         the_list_of_free_time = get_free_gaps_for_one_room(date, room_name)[room_name]
+        print(the_list_of_free_time)
         time_check(the_list_of_free_time, time_from, time_to)
     except NotEnoughRights:
         print("This User doesn`t have enough rights")
@@ -104,9 +105,9 @@ def capacity_check(room_name, number_of_participants):
         nothing
     """
     cursor.execute(f'SELECT capacity FROM Rooms_Information WHERE room_name = "{room_name}"')
-    capacity = cursor.fetchall()[0]
-    if capacity < number_of_participants:
-        raise TooManyParticipants
+    capacity = cursor.fetchall()
+    if capacity[0][0] < number_of_participants:
+        raise TooManyParticipants(status_code=400, detail="Too many participants")
 
 
 def time_check(the_list_of_free_time, time_from, time_to):
@@ -124,15 +125,21 @@ def time_check(the_list_of_free_time, time_from, time_to):
     """
     fl = 0
     for time in the_list_of_free_time:
-        time = time.replace(' ', '').replace(':', ' ').replace('-', '')
+        time = time.replace(' ', '').replace('-', ' ').replace(':', ' ')
+        print(time)
         hours_from_free, min_from_free, hours_to_free, min_to_free = map(int, time.split())
         hours_from, min_from = map(int, time_from.split(':'))
         hours_to, min_to = map(int, time_to.split(':'))
-        if (hours_from_free <= hours_from and min_from_free <= min_from and hours_to_free >= hours_to
-                and min_to_free >= min_to):
-            fl = 1
+        if hours_from_free > hours_from or hours_to_free < hours_to:
+            continue
+        elif hours_from_free == hours_from and min_from_free > min_from:
+            continue
+        elif hours_to_free == hours_to and min_to_free < min_to:
+            continue
+        fl = 1
+        break
     if fl == 0:
-        raise ThisTimeHasAlreadyBeenBooked
+        raise ThisTimeHasAlreadyBeenBooked(status_code=400, detail="This time has already been booked")
 
 
 @app.delete("/unnbook")
@@ -149,9 +156,14 @@ def unnbook(login: str, operation_id: int):
     Returns:
         nothing
     """
+    cursor.execute(f'SELECT type_of_operation FROM History_of_Operations WHERE operation_id = ?', (operation_id, ))
+    type_op = cursor.fetchall()
+    if type_op[0][0] != "booking":
+        return "Unsupportable for this operation"
     try:
-        cursor.execute(f'SELECT booker FROM Rooms_information WHERE operation_id = ?', (operation_id, ))
-        if login == cursor.fetchall():
+        cursor.execute(f'SELECT booker FROM History_of_Operations WHERE operation_id = ?', (operation_id, ))
+        booker = cursor.fetchall()
+        if login == booker[0][0]:
             access_permission("unnbooking", login)
         else:
             access_permission("unnbooking other user", login)
