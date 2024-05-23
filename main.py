@@ -240,6 +240,7 @@ def get_free_gaps_for_rooms(date: str, capacity=0, location="", eq_proj="", eq_b
     return free_gaps
 
 
+
 @app.post("/add_room")
 def add_room(room_name: str, login: str, area: float, capacity: int, inf: str, img: str, loc: str, eq_proj="NO",
              eq_board="NO"):
