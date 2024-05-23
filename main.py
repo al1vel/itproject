@@ -87,9 +87,9 @@ def get_info(request: Request, room_name: str):
         "area": room_info[1],
         "capacity": room_info[2],
         "equipment": room_info[3],
-        "description": room_info[4],
-        "room_image": room_info[5],
-        "location": room_info[6]
+        "description": room_info[5],
+        "room_image": room_info[6],
+        "location": room_info[7]
     }
     return templates.TemplateResponse("room.html", {"request": request, **room_data})
 
@@ -385,26 +385,24 @@ async def login_user(request: Request, login: str = Form(...), password: str = F
 async def get_user_info(request: Request, login: str):
     cursor.execute('SELECT * FROM Users WHERE login = ?', (login,))
     user_data = cursor.fetchone()
-
     if user_data is None:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    # Form the name of the history table dynamically based on the login
-    history_table_name = f'History_of_Operations_{user_data[0]}'  # Assuming user_data[0] is the operation_id
-
-    # Fetch active bookings for the user
-    cursor.execute(f'SELECT * FROM {history_table_name} WHERE date >= date("now")')
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    cursor.execute(f'''
+        SELECT * FROM History_of_Operations 
+        WHERE booker = ? AND date >= date('now')
+    ''', (login,))
     active_bookings = cursor.fetchall()
-
-    # Fetch booking history for the user
-    cursor.execute(f'SELECT * FROM {history_table_name} WHERE date < date("now")')
+    cursor.execute(f'''
+        SELECT * FROM History_of_Operations 
+        WHERE booker = ? AND date < date('now')
+    ''', (login,))
     booking_history = cursor.fetchall()
     cursor.execute("SELECT room_name FROM Rooms_Information")
     room_data = cursor.fetchall()
-
     return templates.TemplateResponse("lk.html", {"request": request, "user_data": user_data,
                                                   "active_bookings": active_bookings,
                                                   "booking_history": booking_history, "room_data": room_data})
+
 
 def access_permission(type_of_operation: str, login: str):
     """
