@@ -1,4 +1,3 @@
-import base64
 import sqlite3
 from fastapi import Request, Form
 from fastapi import FastAPI, HTTPException
@@ -208,6 +207,17 @@ def get_info(request: Request, room_name: str):
         "location": room_info[7]
     }
     return templates.TemplateResponse("room.html", {"request": request, **room_data})
+
+
+@app.get("/main_page")
+def search_rooms(request: str, date: str):
+    cursor.execute("SELECT room_name FROM Rooms_information")
+    rooms = cursor.fetchall()
+    result = {}
+    for room in rooms:
+        if request in room[0]:
+            result |= get_free_gaps_for_one_room(date, room[0])
+    return result
 
 
 @app.get("/check")
