@@ -1,4 +1,3 @@
-import base64
 import sqlite3
 from fastapi import Request, Form
 from fastapi import FastAPI, HTTPException
@@ -54,7 +53,7 @@ async def read_home(request: Request):
     return templates.TemplateResponse("home.html", {"request": request})
 
 
-@app.post("/book")
+@app.post("/main_page")
 def book(login: str, room_name: str, date: str, time_from: str, time_to: str, number_of_participants: int):
     """
     Функция API для бронирования комнаты.
@@ -144,7 +143,7 @@ def time_check(the_list_of_free_time, time_from, time_to):
         raise ThisTimeHasAlreadyBeenBooked(status_code=400, detail="This time has already been booked")
 
 
-@app.delete("/unnbook")
+@app.delete("/main_page")
 def unnbook(login: str, room_name: str, date: str, time_from: str, time_to: str):
     """
     Функция API для отмены бронирования комнаты.
@@ -181,6 +180,29 @@ def unnbook(login: str, room_name: str, date: str, time_from: str, time_to: str)
                    f'time_to = ?', (room_name, date, time_from, ))
 
 
+@app.get("/all_history")
+def all_history(login: str):
+    """
+    Функция для визуализации истории операций.
+
+    Функция возвращает все данные из таблицы History_of_Operations.
+
+    Args:
+        login: string
+
+    Returns:
+        list of values tuple = (operation id = integer, room name = string, type of operation = string, booker = string,
+         date = string, time from = string, time to = string)
+    """
+    try:
+        access_permission("check all history", login)
+    except NotEnoughRights:
+        print("This User hasn`t enough rights")
+        return "This User hasn`t enough rights"
+    cursor.execute("SELECT * FROM History_of_Operations")
+    return cursor.fetchall()
+
+
 @app.get("/get_info", response_class=HTMLResponse)
 def get_info(request: Request, room_name: str):
     """
@@ -208,6 +230,30 @@ def get_info(request: Request, room_name: str):
         "location": room_info[7]
     }
     return templates.TemplateResponse("room.html", {"request": request, **room_data})
+
+
+@app.get("/main_page")
+def search_rooms(request: str, date: str):
+    """
+    Функция для поиска комнат.
+
+    Функция получает комнаты, в которых встречается введенный запрос, а также незанятые промежутки времени
+     на выбранную дату.
+
+    Args:
+        request: string
+        date: string(**.**.****)
+
+    Returns:
+        dict, key = room name, value = array of free gaps in minutes (int)
+    """
+    cursor.execute("SELECT room_name FROM Rooms_information")
+    rooms = cursor.fetchall()
+    result = {}
+    for room in rooms:
+        if request in room[0]:
+            result |= get_free_gaps_for_one_room(date, room[0])
+    return result
 
 
 @app.get("/check")
@@ -301,7 +347,7 @@ def conjunction_of_list(*lists):
     return list(res)
 
 
-@app.get("/filter")
+@app.get("/main_page")
 def filter_rooms(capacity=0, location=None, eq_proj=None, eq_board=None):
 
     cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE capacity >= "{capacity}"')
