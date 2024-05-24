@@ -562,7 +562,7 @@ main_text_f{
 }
 
 .time-column input[type="text"] {
-    width: 80%;
+    width: 100%;
     padding: 9%;
     border: 1px solid #ccc;
     border-radius: 4px;
