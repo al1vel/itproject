@@ -1,3 +1,4 @@
+import base64
 import sqlite3
 from fastapi import Request, Form
 from fastapi import FastAPI, HTTPException
@@ -500,31 +501,38 @@ async def register_user(request: Request, username: str = Form(...), password: s
     Returns:
 
     """
+    # Список для хранения сообщений об ошибках
+    errors = []
     # Проверки данных
     if len(password) < 8:
-        raise HTTPException(status_code=400, detail="Пароль должен содержать не менее 8 символов")
+        errors.append("Пароль должен содержать не менее 8 символов")
     if not any(char.isdigit() for char in password):
-        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы одну цифру")
+        errors.append("Пароль должен содержать хотя бы одну цифру")
     if not any(char.isalpha() for char in password):
-        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы одну букву")
+        errors.append("Пароль должен содержать хотя бы одну букву")
     if not any(char in "!@#$%^&*()-_+=<>?/.,:;" for char in password):
-        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы один специальный символ: "
-                                                    "!@#$%^&*()-_+=<>?/.,:;")
+        errors.append("Пароль должен содержать хотя бы один специальный символ: "
+                      "!@#$%^&*()-_+=<>?/.,:;")
     if password != doublepassword:
-        raise HTTPException(status_code=400, detail="Пароли не совпадают")
+        errors.append("Пароли не совпадают")
+
+    # Если есть ошибки, возвращаем страницу регистрации с сообщениями об ошибках
+    if errors:
+        return templates.TemplateResponse("register.html", {"request": request, "errors": errors})
 
     # Проверка наличия пользователя с таким же email в базе данных
     cursor.execute('SELECT * FROM Users WHERE email = ?', (email,))
     existing_user = cursor.fetchone()
     if existing_user:
-        raise HTTPException(status_code=400, detail="Пользователь с таким адресом электронной почты "
-                                                    "уже зарегистрирован")
+        errors.append("Пользователь с таким адресом электронной почты уже зарегистрирован")
+        return templates.TemplateResponse("register.html", {"request": request, "errors": errors})
 
     # Проверка наличия пользователя с таким же логином в базе данных
     cursor.execute('SELECT * FROM Users WHERE login = ?', (login,))
     existing_login = cursor.fetchone()
     if existing_login:
-        raise HTTPException(status_code=400, detail="Пользователь с таким логином уже зарегистрирован")
+        errors.append("Пользователь с таким логином уже зарегистрирован")
+        return templates.TemplateResponse("register.html", {"request": request, "errors": errors})
 
     # Хэширование пароля и добавление пользователя в базу данных
     hashed_password = get_password_hash(password)
@@ -552,7 +560,9 @@ async def show_login_form(request: Request):
 async def login_user(request: Request, login: str = Form(...), password: str = Form(...)):
     """
     Функция для авторизации пользователя
+
     Функция предназначена для того, чтобы аутентифицировать пользователя, используя предоставленные им логин и пароль
+
     Args:
         request:
         login:
@@ -563,8 +573,8 @@ async def login_user(request: Request, login: str = Form(...), password: str = F
     """
     authenticated = await authenticate_user(login, password, cursor)
     if not authenticated:
-        raise HTTPException(status_code=401, detail="Неправильный логин или пароль")
-
+        errors = ["Неправильный логин или пароль"]
+        return templates.TemplateResponse("login.html", {"request": request, "errors": errors})
     return templates.TemplateResponse("login.html", {"request": request})
 
 
@@ -606,7 +616,7 @@ def access_permission(type_of_operation: str, login: str):
     role = cursor.fetchone()
     if type_of_operation in ("booking", "unnbooking") and role[0] < 'B':
         raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
-    elif type_of_operation in ("unnbooking other user", "adding room") and role[0] < 'C':
+    elif type_of_operation in "unnbooking other user" and role[0] < 'C':
         raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
     return "Operation is allowed"
 
@@ -618,8 +628,8 @@ def show_calendar(request: Request, date: str):
     return templates.TemplateResponse("main_page.html", {"request": request})
 
 
-@app.get("/graph")
-def show_graphics(month: str):
+@app.post("/get_info", response_class=HTMLResponse)
+def show_graphics(request: Request, month: str, room_name: str):
     months = {"January": "01",
               "February": "02",
               "March": "03",
@@ -673,7 +683,12 @@ def show_graphics(month: str):
     plt.ylabel('Занятость')
     plt.title('Занятость комнат на протяжении месяца')
     plt.legend()
-    plt.show()
+    temp_file = "temp_graph.png"
+    plt.savefig(temp_file)
+    with open(temp_file, "rb") as image_file:
+        encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
+    return templates.TemplateResponse("graphics.html", {"request": request, "graph_image": temp_file})
+
 
 # Пока не работает
 @app.get("/booking_recommendation")

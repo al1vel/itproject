@@ -37,6 +37,13 @@
                 <span>Уже есть аккаунт? </span>
                 <a href="http://127.0.0.1:8000/login" class="button2">Войти</a>
             </div>
+            {% if errors %}
+            <ul>
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+            </ul>
+            {% endif %}
         </form>
     </body>
 </html>
