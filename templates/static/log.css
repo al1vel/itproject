@@ -28,7 +28,7 @@ body {
     position: relative;
     overflow: hidden;
     z-index: 1;
-    margin: 40px 10px 10px 10px;
+    margin: 20px 10px 10px 10px;
     width: 90%;
     text-align: center;
     border: none;
@@ -109,4 +109,9 @@ form {
 }
 .container {
     text-align: center;
+}
+ul{
+    font-size: 0.9rem;
+    margin: 1rem;
+    padding: 0;
 }

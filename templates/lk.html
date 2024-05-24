@@ -63,7 +63,8 @@
             </div>
             {% endfor %}
         </div>
-        <div class="booking-container">
+        <button onclick="chpok('text')">TEST</button>
+        <div id="text" class="booking-container">
             <div class="active-bookings">История бронирований</div>
             {% for booking in booking_history %}
             <div class="room-info">
@@ -93,6 +94,14 @@
     document.getElementById('pageSelect').addEventListener('change', function() {
         window.location.href = this.value;
     });
+</script>
+<script>
+function chpok(id){
+    elem = document.getElementById(id); //находим блок div по его id, который передали в функцию
+    state = elem.style.display; //смотрим, включен ли сейчас элемент
+    if (state =='') elem.style.display='none'; //если включен, то выключаем
+    else elem.style.display=''; //иначе - включаем
+}
 </script>
     </body>
 </html>

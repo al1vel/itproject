@@ -108,3 +108,8 @@ form {
     font-family: 'Jomhuria';
     letter-spacing: .1rem;
 }
+ul{
+    font-size: 0.85rem;
+    margin: 0;
+    padding: 0;
+}
