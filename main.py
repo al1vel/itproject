@@ -709,26 +709,22 @@ def show_graphics(request: Request, month: str, room_name: str):
         else:
             print("TROUBLE")
 
-        free_gaps = get_free_gaps_for_rooms(cur_day)
-        all_book_time = 0
-        all_free_time = len(free_gaps.keys()) * 540
-        for room in free_gaps.keys():
-            gaps = free_gaps[room]
-            free_time = 0
-            for time in gaps:
-                time_from = time.split("-")[0]
-                time_to = time.split("-")[1]
-                time_from_int = int(time_from.split(":")[0]) * 60 + int(time_from.split(":")[1])
-                time_to_int = int(time_to.split(":")[0]) * 60 + int(time_to.split(":")[1])
-                free_time = free_time + (time_to_int - time_from_int)
-            book_time = 540 - free_time
-            all_book_time += book_time
-        percent = round((all_book_time / all_free_time) * 100)
+        gaps = get_free_gaps_for_one_room(cur_day, room_name)[room_name]
+        free_time = 0
+        for time in gaps:
+            time_from = time.split("-")[0]
+            time_to = time.split("-")[1]
+            time_from_int = int(time_from.split(":")[0]) * 60 + int(time_from.split(":")[1])
+            time_to_int = int(time_to.split(":")[0]) * 60 + int(time_to.split(":")[1])
+            free_time = free_time + (time_to_int - time_from_int)
+        book_time = 540 - free_time
+        percent = round((book_time / 540) * 100)
         y.append(percent)
+
     plt.bar(x, y, label='Занятость')
     plt.xlabel('День')
     plt.ylabel('Занятость')
-    plt.title('Занятость комнат на протяжении месяца')
+    plt.title('Занятость комнаты на протяжении месяца')
     plt.legend()
     temp_file = "temp_graph.png"
     plt.savefig(temp_file)
