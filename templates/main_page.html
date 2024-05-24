@@ -39,15 +39,20 @@
     </div>
     <div class="filter-options">
         <div class="filter-column">
-            <div class="equipment-options">
-                <label for="equipment">Оборудование:</label>
-                <select id="equipment" multiple>
-                    <option value="Телевизор">Телевизор</option>
-                    <option value="Проектор">Проектор</option>
-                    <!-- Другие варианты оборудования -->
-                </select>
-            </div>
+    <div class="equipment-options">
+        <label>Оборудование:</label>
+        <div>
+            <input type="checkbox" id="eq_proj" name="eq_proj" value="Проектор">
+            <label for="eq_proj">Проектор</label>
         </div>
+        <div>
+            <input type="checkbox" id="eq_board" name="eq_board" value="Доска">
+            <label for="eq_board">Доска</label>
+        </div>
+        <!-- Добавьте другие варианты оборудования, если необходимо -->
+    </div>
+</div>
+
         <div class="filter-column">
             <div class="capacity-options">
                 <label for="capacity">Вместимость:</label>
