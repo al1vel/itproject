@@ -143,7 +143,7 @@ def time_check(the_list_of_free_time, time_from, time_to):
         raise ThisTimeHasAlreadyBeenBooked(status_code=400, detail="This time has already been booked")
 
 
-@app.delete("/main_page")
+@app.delete("/user_info")
 def unnbook(login: str, room_name: str, date: str, time_from: str, time_to: str):
     """
     Функция API для отмены бронирования комнаты.
@@ -160,24 +160,27 @@ def unnbook(login: str, room_name: str, date: str, time_from: str, time_to: str)
     Returns:
         nothing
     """
-    cursor.execute(f'SELECT type_of_operation FROM History_of_Operations WHERE room_name = ?, date = ?, time_from = ?,'
-                   f'time_to = ?', (room_name, date, time_from, ))
+    cursor.execute(
+        'SELECT type_of_operation FROM History_of_Operations WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?',
+        (room_name, date, time_from, time_to))
     type_op = cursor.fetchall()
-    if type_op[0][0] != "booking":
+    if type_op and type_op[0][0] != "booking":
         return "Unsupportable for this operation"
     try:
-        cursor.execute(f'SELECT booker FROM History_of_Operations WHERE room_name = ?, date = ?, time_from = ?,'
-                       f'time_to = ?', (room_name, date, time_from, ))
+        cursor.execute(
+            'SELECT booker FROM History_of_Operations WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?',
+            (room_name, date, time_from, time_to))
         booker = cursor.fetchall()
-        if login == booker[0][0]:
+        if booker and login == booker[0][0]:
             access_permission("unnbooking", login)
         else:
             access_permission("unnbooking other user", login)
     except NotEnoughRights:
-        print("This User hasn`t enough rights")
-        return "This User hasn`t enough rights"
-    cursor.execute(f'DELETE FROM History_of_Operations WHERE room_name = ?, date = ?, time_from = ?,'
-                   f'time_to = ?', (room_name, date, time_from, ))
+        print("This User hasn't enough rights")
+        return "This User hasn't enough rights"
+    cursor.execute(
+        'DELETE FROM History_of_Operations WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?',
+        (room_name, date, time_from, time_to))
 
 
 @app.get("/all_history")
@@ -388,6 +391,11 @@ def filter_rooms(capacity=0, location=None, eq_proj=None, eq_board=None):
     else:
         all_rn = []
     return all_rn
+
+
+@app.get("/main_page")
+async def main_page(request: Request):
+    return templates.TemplateResponse("main_page.html", {"request": request})
 
 
 @app.get("/free_gaps")
