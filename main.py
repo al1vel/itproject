@@ -144,7 +144,7 @@ def time_check(the_list_of_free_time, time_from, time_to):
 
 
 @app.delete("/unnbook")
-def unnbook(login: str, operation_id: int):
+def unnbook(login: str, room_name: str, date: str, time_from: str, time_to: str):
     """
     Функция API для отмены бронирования комнаты.
 
@@ -152,17 +152,22 @@ def unnbook(login: str, operation_id: int):
 
     Args:
         login: string
-        operation_id:  int
+        room_name:  string
+        date: string in format **.**.****
+        time_from: string in format **:**
+        time_to: string in format **:**
 
     Returns:
         nothing
     """
-    cursor.execute(f'SELECT type_of_operation FROM History_of_Operations WHERE operation_id = ?', (operation_id, ))
+    cursor.execute(f'SELECT type_of_operation FROM History_of_Operations WHERE room_name = ?, date = ?, time_from = ?,'
+                   f'time_to = ?', (room_name, date, time_from, ))
     type_op = cursor.fetchall()
     if type_op[0][0] != "booking":
         return "Unsupportable for this operation"
     try:
-        cursor.execute(f'SELECT booker FROM History_of_Operations WHERE operation_id = ?', (operation_id, ))
+        cursor.execute(f'SELECT booker FROM History_of_Operations WHERE room_name = ?, date = ?, time_from = ?,'
+                       f'time_to = ?', (room_name, date, time_from, ))
         booker = cursor.fetchall()
         if login == booker[0][0]:
             access_permission("unnbooking", login)
@@ -171,7 +176,8 @@ def unnbook(login: str, operation_id: int):
     except NotEnoughRights:
         print("This User hasn`t enough rights")
         return "This User hasn`t enough rights"
-    cursor.execute(f'DELETE FROM History_of_Operations WHERE operation_id = ?', (operation_id, ))
+    cursor.execute(f'DELETE FROM History_of_Operations WHERE room_name = ?, date = ?, time_from = ?,'
+                   f'time_to = ?', (room_name, date, time_from, ))
 
 
 @app.get("/get_info", response_class=HTMLResponse)
@@ -668,3 +674,25 @@ def show_graphics(month: str):
     plt.title('Занятость комнат на протяжении месяца')
     plt.legend()
     plt.show()
+
+# Пока не работает
+@app.get("/booking_recommendation")
+def booking_recommendation(login: str, date: str):
+    cursor.execute("SELECT room_name, time_from, time_to FROM History_of_Operations WHERE booker = ?,"
+                   "type_of_operation = booking", (login, ))
+    info = cursor.fetchall()
+    stats = {}
+    for operation in info:
+        if stats[operation[0]]:
+            stats[operation[0]]["cnt"] += 1
+            stats[operation[0]]["time_from"].append(operation[1])
+            stats[operation[0]]["time_to"].append(operation[2])
+        else:
+            stats[operation[0]] = {"cnt": 1, "time_from": [operation[1]], "time_to": [operation[2]]}
+    recommended_rooms = []
+    for room in stats.keys():
+        free_time = get_free_gaps_for_one_room(date, room)[room]
+        cnt = stats[room]["cnt"]
+        time_from = sum(stats[room]["time_from"]) / cnt
+        time_to = sum(stats[room]["time_to"]) / cnt
+        time_check(free_time, time_from, time_to)
