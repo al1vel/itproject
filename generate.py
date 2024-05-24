@@ -42,7 +42,7 @@ def initialize_database():
     CREATE TABLE IF NOT EXISTS History_of_Operations (   
     operation_id INTEGER PRIMARY KEY,
     room_name TEXT NOT NULL,
-    type_of_operation TEXT CHECK(type_of_operation IN ('book', 'cancel', 'cancel_any')) NOT NULL,
+    type_of_operation TEXT CHECK(type_of_operation IN ("booking", "unbooking", "unnbooking other user")) NOT NULL,
     booker TEXT NOT NULL,
     date TEXT NOT NULL,
     time_from TEXT NOT NULL,
@@ -101,9 +101,9 @@ def fill_history_of_operations_table(cursor, num_users=10):
         room_name = cursor.execute("SELECT room_name FROM Rooms_Information ORDER BY RANDOM() LIMIT 1").fetchone()[0]
         pass_level = fake.random_element(elements=('B', 'C'))  # Рандомный выбор уровня доступа
         if pass_level == 'C':
-            type_of_operation = fake.random_element(elements=('book', 'cancel', 'cancel_any'))
+            type_of_operation = fake.random_element(elements=("booking", "unbooking", "unnbooking other user"))
         elif pass_level == 'B':
-            type_of_operation = fake.random_element(elements=('book', 'cancel'))
+            type_of_operation = fake.random_element(elements=("booking", "unbooking"))
         booker = cursor.execute(
             "SELECT login FROM Users WHERE pass_level = ? ORDER BY RANDOM() LIMIT 1", (pass_level,)).fetchone()
         if booker:

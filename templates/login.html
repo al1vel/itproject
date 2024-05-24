@@ -25,6 +25,13 @@
             <button class="button" type="submit">Авторизоваться</button>
             <span>Ещё нет аккаунта? </span>
             <a href="http://127.0.0.1:8000/register" class="button2">Зарегистрироваться</a>
+            {% if errors %}
+            <ul>
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+            </ul>
+            {% endif %}
         </form>
     </body>
 </html>

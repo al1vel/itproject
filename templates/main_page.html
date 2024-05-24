@@ -32,31 +32,30 @@
     <div class="filter-controls">
         <p><div class="filter-column">
             <button onclick="toggleFilters()">Показать фильтры</button>
-        </div></p>
+        </div>
         <p><div class="filter-column">
             <button onclick="applyFilters()">Применить</button>
-        </div></p>
+        </div>
     </div>
     <div class="filter-options">
         <div class="filter-column">
-            <div class="equipment-options">
-                <label for="equipment">Оборудование:</label>
-                <select id="equipment" multiple>
-                    <option value="Телевизор">Телевизор</option>
-                    <option value="Проектор">Проектор</option>
-                    <!-- Другие варианты оборудования -->
-                </select>
-            </div>
+    <div class="equipment-options">
+        <label>Оборудование:</label>
+        <div>
+            <input type="checkbox" id="eq_proj" name="eq_proj" value="Проектор">
+            <label for="eq_proj">Проектор</label>
         </div>
+        <div>
+            <input type="checkbox" id="eq_board" name="eq_board" value="Доска">
+            <label for="eq_board">Доска</label>
+        </div>
+    </div>
+</div>
+
         <div class="filter-column">
             <div class="capacity-options">
                 <label for="capacity">Вместимость:</label>
-                <select id="capacity">
-                    <option value="1-10">1-10</option>
-                    <option value="11-15">11-15</option>
-                    <option value="16-25">16-25</option>
-                    <option value="26-40">26-40</option>
-                </select>
+                <input type="number" id="capacity" placeholder="Введите количество участников" required><br>
             </div>
         </div>
         <div class="filter-column">
@@ -79,18 +78,18 @@
         <div class="control-column_mon">
             <label for="month">Месяц:</label>
             <select id="month" onchange="updateCalendar()">
-                <option value="0">Январь</option>
-                <option value="1">Февраль</option>
-                <option value="2">Март</option>
-                <option value="3">Апрель</option>
-                <option value="4">Май</option>
-                <option value="5">Июнь</option>
-                <option value="6">Июль</option>
-                <option value="7">Август</option>
-                <option value="8">Сентябрь</option>
-                <option value="9">Октябрь</option>
-                <option value="10">Ноябрь</option>
-                <option value="11">Декабрь</option>
+                <option value="01">Январь</option>
+                <option value="02">Февраль</option>
+                <option value="03">Март</option>
+                <option value="04">Апрель</option>
+                <option value="05">Май</option>
+                <option value="06">Июнь</option>
+                <option value="07">Июль</option>
+                <option value="08">Август</option>
+                <option value="09">Сентябрь</option>
+                <option value="10">Октябрь</option>
+                <option value="11">Ноябрь</option>
+                <option value="12">Декабрь</option>
             </select>
         </div>
         <div class="control-column_year">
@@ -98,7 +97,6 @@
             <input type="number" id="year" onchange="updateCalendar()">
         </div>
     </div>
-
     <table id="calendar">
         <thead>
         <tr>
@@ -127,24 +125,21 @@
                     <div class="booking-details_main">
                         <p>Время: 13:00-14:00</p>
                     </div>
+    <div class="time-input-container">
+        <div class="time-column">
+            <label for="time_from">Время начала:</label>
+            <input type="text" id="time_from" placeholder="Начальное время" required><br>
+        </div>
+        <div class="time-column">
+            <label for="time_to">Время окончания:</label>
+            <input type="text" id="time_to" placeholder="Конечное время" required><br>
+        </div>
                         <div class="button-container">
-                            <button onclick="redirectToDetails()">Подробнее</button></div>
                             <div class="button-container_br"><button onclick="bookRoom()">Забронировать</button>
+                            <button onclick="redirectToDetails()">Подробнее</button></div>
                          </div>
             </div>
-         <div class="room-info_main">
-                <div class="name_room_main">
-                <p>Название комнаты</p>
-                </div>
-                    <div class="booking-details_main">
-                        <p>Время: 13:00-14:00</p>
-                    </div>
-                        <div class="button-container">
-                            <button onclick="redirectToDetails()">Подробнее</button></div>
-                            <div class="button-container_br"><button onclick="bookRoom()">Забронировать</button>
-                         </div>
-            </div>
-</div>
+</div></div>
     <script>
         function createCalendar(year, month) {
             const firstDay = new Date(year, month, 1);
@@ -189,20 +184,17 @@
                 calendar.style.display = 'none';
             }
         }
-
         function updateCalendar() {
             const month = parseInt(document.getElementById('month').value);
             const year = parseInt(document.getElementById('year').value);
             createCalendar(year, month);
         }
-
         const now = new Date();
         const currentYear = now.getFullYear();
         const currentMonth = now.getMonth();
         document.getElementById('year').value = currentYear;
         document.getElementById('month').value = currentMonth;
         createCalendar(currentYear, currentMonth);
-
         function toggleFilters() {
     var equipmentOptions = document.querySelector('.equipment-options');
     var capacityOptions = document.querySelector('.capacity-options');
@@ -217,11 +209,6 @@
         locOptions.style.display = 'none';
     }
 }
-
-
-        function applyFilters() {
-            // Логика применения фильтров
-        }
     function toggleDropdown() {
         var dropdown = document.getElementById('dropdown');
         dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
