@@ -141,6 +141,14 @@
             </div>
 </div></div>
     <script>
+        function toggleDropdown() {
+        var dropdown = document.getElementById('dropdown');
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
+
+    document.getElementById('pageSelect').addEventListener('change', function() {
+        window.location.href = this.value;
+    });
         function createCalendar(year, month) {
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
@@ -208,15 +216,7 @@
         capacityOptions.style.display = 'none';
         locOptions.style.display = 'none';
     }
-}
-    function toggleDropdown() {
-        var dropdown = document.getElementById('dropdown');
-        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-    }
-
-    document.getElementById('pageSelect').addEventListener('change', function() {
-        window.location.href = this.value;
-    });
+});
 
     </script>
     </body>
