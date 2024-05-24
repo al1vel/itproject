@@ -178,7 +178,7 @@ def unnbook(login: str, room_name: str, date: str, time_from: str, time_to: str)
         print("This User hasn`t enough rights")
         return "This User hasn`t enough rights"
     cursor.execute(f'DELETE FROM History_of_Operations WHERE room_name = ?, date = ?, time_from = ?,'
-                   f'time_to = ?', (room_name, date, time_from, ))
+                   f'time_to = ?', (room_name, date, time_from, time_to))
 
 
 @app.get("/all_history")
