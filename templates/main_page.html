@@ -51,12 +51,7 @@
         <div class="filter-column">
             <div class="capacity-options">
                 <label for="capacity">Вместимость:</label>
-                <select id="capacity">
-                    <option value="1-10">1-10</option>
-                    <option value="11-15">11-15</option>
-                    <option value="16-25">16-25</option>
-                    <option value="26-40">26-40</option>
-                </select>
+                <input type="number" id="capacity" placeholder="Введите количество участников" required><br>
             </div>
         </div>
         <div class="filter-column">
@@ -126,24 +121,21 @@
                     <div class="booking-details_main">
                         <p>Время: 13:00-14:00</p>
                     </div>
+    <div class="time-input-container">
+        <div class="time-column">
+            <label for="time_from">Время начала:</label>
+            <input type="text" id="time_from" placeholder="Начальное время" required><br>
+        </div>
+        <div class="time-column">
+            <label for="time_to">Время окончания:</label>
+            <input type="text" id="time_to" placeholder="Конечное время" required><br>
+        </div>
                         <div class="button-container">
-                            <button onclick="redirectToDetails()">Подробнее</button></div>
                             <div class="button-container_br"><button onclick="bookRoom()">Забронировать</button>
+                            <button onclick="redirectToDetails()">Подробнее</button></div>
                          </div>
             </div>
-         <div class="room-info_main">
-                <div class="name_room_main">
-                <p>Название комнаты</p>
-                </div>
-                    <div class="booking-details_main">
-                        <p>Время: 13:00-14:00</p>
-                    </div>
-                        <div class="button-container">
-                            <button onclick="redirectToDetails()">Подробнее</button></div>
-                            <div class="button-container_br"><button onclick="bookRoom()">Забронировать</button>
-                         </div>
-            </div>
-</div>
+</div></div>
     <script>
         function createCalendar(year, month) {
             const firstDay = new Date(year, month, 1);
