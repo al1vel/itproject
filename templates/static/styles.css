@@ -179,18 +179,18 @@ button:hover {
         align-items: flex-start;
 }
 .button-container_br {
-        width: 10%;
-        height: 50px;
+        width: 60%;
+        height: 100%;
         display: flex;
-        margin-right:4%;
-        margin-top:1%;
+        margin-right:5%;
+        margin-top:2%;
         justify-content: flex-end;
 }
 .button-container {
-        width: 15%;
+        width: 65%;
         height: 50%;
         display: flex;
-        margin-left:17%;
+        margin-left:10%;
         margin-top:1%;
         justify-content: flex-end;
 }
@@ -281,11 +281,11 @@ button:hover {
         }
 
         .main-content {
-            width: 55%;
+            width: 60%;
             height: 10%;
             margin-top: 1%;
-            margin-right: 15%;
-            margin-left: 5%;
+            margin-right: 13%;
+            margin-left: 3%;
             background-color: #f0f0f0;
             border-radius: 10px;
             text-align: center;
@@ -363,7 +363,7 @@ button:hover {
 .loc-options{
        display: none;
        margin-bottom: 7%;
-       weight:15%;
+       weight:10%;
        height:15%;
 }
 .capacity-options,
@@ -457,7 +457,7 @@ button:hover {
 }
 
 .filter-column {
-    width: 60%;
+    width: 40%;
     margin-right:1%;
 }
 
@@ -519,4 +519,58 @@ main_text_f{
 
 .search-container button:hover {
     background-color: #0056b3;
+}
+#pageSelect {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: transparent;
+  border: none;
+  padding: 5% 2%;
+  font-size: 1.0vw;
+  cursor: pointer;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+#pageSelect option {
+  background-color: #fff;
+  color: #333;
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+}
+#pageSelect option:hover {
+  background-color: #f0f0f0;
+}
+.time-input-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.time-column {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.time-column:last-child {
+    margin-right: 0; /* Убираем отступ справа для последнего столбца */
+}
+
+.time-column label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.time-column input[type="text"] {
+    width: 100%;
+    padding: 9%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+.capacity-options input[type="number"] {
+    width: 50%;
+}
+.button-container button {
+    margin-right: 3%;
 }

@@ -1,3 +1,4 @@
+import base64
 import sqlite3
 from fastapi import Request, Form
 from fastapi import FastAPI, HTTPException
@@ -7,6 +8,7 @@ from database import initialize_database
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+import matplotlib.pyplot as plt
 
 initialize_database()
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
@@ -18,6 +20,18 @@ app.mount("/static", StaticFiles(directory="templates/static"), name="static")
 
 
 class NotEnoughRights(HTTPException):
+    pass
+
+
+class TooManyParticipants(HTTPException):
+    pass
+
+
+class ThisTimeHasAlreadyBeenBooked(HTTPException):
+    pass
+
+
+class ThereIsNoNecessaryEquipment(HTTPException):
     pass
 
 
@@ -41,7 +55,7 @@ async def read_home(request: Request):
 
 
 @app.post("/book")
-def book(login: str, room_name: str, date: str, time_from: str, time_to: str):
+def book(login: str, room_name: str, date: str, time_from: str, time_to: str, number_of_participants: int):
     """
     Функция API для бронирования комнаты.
 
@@ -53,17 +67,118 @@ def book(login: str, room_name: str, date: str, time_from: str, time_to: str):
         date: string in format **.**.****
         time_from: string in format **:**
         time_to: string in format **:**
-
+        number_of_participants: int
     Returns:
         nothing
     """
     try:
         access_permission("booking", login)
+        capacity_check(room_name, number_of_participants)
+        the_list_of_free_time = get_free_gaps_for_one_room(date, room_name)[room_name]
+        print(the_list_of_free_time)
+        time_check(the_list_of_free_time, time_from, time_to)
+    except NotEnoughRights:
+        print("This User doesn`t have enough rights")
+        return "This User doesn`t have enough rights"
+    except TooManyParticipants:
+        print("Too many participants")
+        return "Too many participants"
+    except ThisTimeHasAlreadyBeenBooked:
+        print("The meeting room is occupied at this time")
+        return "The meeting room is occupied at this time"
+    except ThereIsNoNecessaryEquipment:
+        print("There is no necessary equipment")
+        return "There is no necessary equipment"
+    cursor.execute(f'INSERT INTO History_of_Operations (room_name, type_of_operation, booker, date, time_from, time_to)'
+                   f' VALUES ("{room_name}", "booking", "{login}", "{date}", "{time_from}", "{time_to}")')
+    return "The room has been successfully booked"
+
+
+def capacity_check(room_name, number_of_participants):
+    """
+    Функция для проверки вместимости.
+
+    Функция сравнивает вместимость комнаты с количеством поданных человек
+
+    Args:
+        room_name:  string
+        number_of_participants: int
+    Returns:
+        nothing
+    """
+    cursor.execute(f'SELECT capacity FROM Rooms_Information WHERE room_name = "{room_name}"')
+    capacity = cursor.fetchall()
+    if capacity[0][0] < number_of_participants:
+        raise TooManyParticipants(status_code=400, detail="Too many participants")
+
+
+def time_check(the_list_of_free_time, time_from, time_to):
+    """
+    Функция для проверки времени.
+
+    Функция проверяет свободна ли комната в поданный определённый промежуток времени
+
+    Args:
+        the_list_of_free_time: list
+        time_from: string
+        time_to: string
+    Returns:
+        nothing
+    """
+    fl = 0
+    for time in the_list_of_free_time:
+        time = time.replace(' ', '').replace('-', ' ').replace(':', ' ')
+        print(time)
+        hours_from_free, min_from_free, hours_to_free, min_to_free = map(int, time.split())
+        hours_from, min_from = map(int, time_from.split(':'))
+        hours_to, min_to = map(int, time_to.split(':'))
+        if hours_from_free > hours_from or hours_to_free < hours_to:
+            continue
+        elif hours_from_free == hours_from and min_from_free > min_from:
+            continue
+        elif hours_to_free == hours_to and min_to_free < min_to:
+            continue
+        fl = 1
+        break
+    if fl == 0:
+        raise ThisTimeHasAlreadyBeenBooked(status_code=400, detail="This time has already been booked")
+
+
+@app.delete("/unnbook")
+def unnbook(login: str, room_name: str, date: str, time_from: str, time_to: str):
+    """
+    Функция API для отмены бронирования комнаты.
+
+    Функция удаляет бронь комнаты из базе данных в таблице "История операций".
+
+    Args:
+        login: string
+        room_name:  string
+        date: string in format **.**.****
+        time_from: string in format **:**
+        time_to: string in format **:**
+
+    Returns:
+        nothing
+    """
+    cursor.execute(f'SELECT type_of_operation FROM History_of_Operations WHERE room_name = ?, date = ?, time_from = ?,'
+                   f'time_to = ?', (room_name, date, time_from, ))
+    type_op = cursor.fetchall()
+    if type_op[0][0] != "booking":
+        return "Unsupportable for this operation"
+    try:
+        cursor.execute(f'SELECT booker FROM History_of_Operations WHERE room_name = ?, date = ?, time_from = ?,'
+                       f'time_to = ?', (room_name, date, time_from, ))
+        booker = cursor.fetchall()
+        if login == booker[0][0]:
+            access_permission("unnbooking", login)
+        else:
+            access_permission("unnbooking other user", login)
     except NotEnoughRights:
         print("This User hasn`t enough rights")
         return "This User hasn`t enough rights"
-    cursor.execute(f'INSERT INTO History_of_Operations (room_name, type_of_operation, booker, date, time_from, time_to)'
-                   f' VALUES ("{room_name}", "booking", "{login}", "{date}", "{time_from}", "{time_to}")')
+    cursor.execute(f'DELETE FROM History_of_Operations WHERE room_name = ?, date = ?, time_from = ?,'
+                   f'time_to = ?', (room_name, date, time_from, ))
 
 
 @app.get("/get_info", response_class=HTMLResponse)
@@ -86,10 +201,11 @@ def get_info(request: Request, room_name: str):
         "room_name": room_info[0],
         "area": room_info[1],
         "capacity": room_info[2],
-        "equipment": room_info[3],
-        "description": room_info[4],
-        "room_image": room_info[5],
-        "location": room_info[6]
+        "eq_proj": room_info[3],
+        "eq_board": room_info[4],
+        "description": room_info[5],
+        "room_image": room_info[6],
+        "location": room_info[7]
     }
     return templates.TemplateResponse("room.html", {"request": request, **room_data})
 
@@ -171,8 +287,65 @@ def format_time_to_string(free_gaps):
     return free_gaps
 
 
+def conjunction_of_list(*lists):
+    res = []
+    for ls in lists:
+        for el in ls:
+            flag = 1
+            for list1 in lists:
+                if el not in list1:
+                    flag = 0
+            if flag == 1:
+                res.append(el)
+    res = set(res)
+    return list(res)
+
+
+@app.get("/filter")
+def filter_rooms(capacity=0, location=None, eq_proj=None, eq_board=None):
+
+    cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE capacity >= "{capacity}"')
+    capacity_names = cursor.fetchall()
+
+    if location is not None:
+        cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE location = "{location}"')
+        location_names = cursor.fetchall()
+    else:
+        cursor.execute(f'SELECT room_name FROM Rooms_Information')
+        location_names = cursor.fetchall()
+
+    if eq_proj is not None:
+        if eq_proj == "NO":
+            cursor.execute(f'SELECT room_name FROM Rooms_Information')
+            eq_proj_names = cursor.fetchall()
+        else:
+            cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE eq_proj = "{eq_proj}"')
+            eq_proj_names = cursor.fetchall()
+    else:
+        cursor.execute(f'SELECT room_name FROM Rooms_Information')
+        eq_proj_names = cursor.fetchall()
+
+    if eq_board is not None:
+        if eq_board == "NO":
+            cursor.execute(f'SELECT room_name FROM Rooms_Information')
+            eq_board_names = cursor.fetchall()
+        else:
+            cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE eq_board = "{eq_board}"')
+            eq_board_names = cursor.fetchall()
+    else:
+        cursor.execute(f'SELECT room_name FROM Rooms_Information')
+        eq_board_names = cursor.fetchall()
+
+    all_room_names = conjunction_of_list(capacity_names, location_names, eq_proj_names, eq_board_names)
+    if len(all_room_names) > 0:
+        all_rn = all_room_names[0]
+    else:
+        all_rn = []
+    return all_rn
+
+
 @app.get("/free_gaps")
-def get_free_gaps_for_rooms(date: str):
+def get_free_gaps_for_rooms(date: str, capacity=0, location=None, eq_proj=None, eq_board=None):
     """
     Функция API для получения свободных окон для всех комнат на конкретную дату
 
@@ -182,31 +355,44 @@ def get_free_gaps_for_rooms(date: str):
 
     Args:
         date: string
-
+        capacity: int
+        location: string
+        eq_proj: string
+        eq_board: string
     Returns:
         dict, keys = room names, values = array of strings ["**:** - **:**, ...]
     """
-    cursor.execute(f'SELECT room_name FROM Rooms_Information')
-    all_room_names = cursor.fetchall()
-    cursor.execute(f'SELECT room_name, time_from, time_to FROM History_of_Operations WHERE date = "{date}"')
-    current_bookings = cursor.fetchall()
 
-    free_gaps = {}
-    for r_name in all_room_names:
-        free_gaps[r_name[0]] = [[540, 1080], ]
-    split_time_gaps(free_gaps, current_bookings)
-    format_time_to_string(free_gaps)
-    return free_gaps
+    all_room_names = filter_rooms(capacity, location, eq_proj, eq_board)
+    if len(all_room_names) > 0:
+        cursor.execute(f'SELECT room_name, time_from, time_to FROM History_of_Operations WHERE date = "{date}"')
+        current_bookings = cursor.fetchall()
+
+        free_gaps = dict()
+        for r_name in all_room_names:
+            free_gaps[r_name] = [[540, 1080], ]
+        split_time_gaps(free_gaps, current_bookings)
+        format_time_to_string(free_gaps)
+        return free_gaps
+    else:
+        return "NO SUCH ROOM"
 
 
 @app.post("/add_room")
-def add_room(room_name: str, inf: str, login: str):
+def add_room(room_name: str, login: str, area: float, capacity: int, inf: str, img: str, loc: str, eq_proj="NO",
+             eq_board="NO"):
     """
     Функция API, добавляющая новую комнату
 
     Args:
         room_name: string
-        inf: string
+        area: float
+        capacity: int
+        inf: string. Contains description of the room
+        img: string. Contains link to image
+        loc: string. Location of the room
+        eq_proj: "YES" or "NO" if projector exists or not
+        eq_board: "YES" or "NO" if board exists or not
         login: string
 
     Returns:
@@ -217,7 +403,9 @@ def add_room(room_name: str, inf: str, login: str):
     except NotEnoughRights:
         print("This User hasn`t enough rights")
         return "This User hasn`t enough rights"
-    cursor.execute(f'INSERT INTO Rooms_Information (room_name, Information) VALUES ("{room_name}", "{inf}")')
+    cursor.execute(f'INSERT INTO Rooms_Information (room_name, area, capacity, description, room_image, '
+                   f'location, eq_proj, eq_board) VALUES ("{room_name}", "{area}", "{capacity}", "{inf}", "{img}", '
+                   f'"{loc}", "{eq_proj}", "{eq_board}")')
 
 
 @app.get("/free_gaps_for_room")
@@ -313,31 +501,38 @@ async def register_user(request: Request, username: str = Form(...), password: s
     Returns:
 
     """
+    # Список для хранения сообщений об ошибках
+    errors = []
     # Проверки данных
     if len(password) < 8:
-        raise HTTPException(status_code=400, detail="Пароль должен содержать не менее 8 символов")
+        errors.append("Пароль должен содержать не менее 8 символов")
     if not any(char.isdigit() for char in password):
-        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы одну цифру")
+        errors.append("Пароль должен содержать хотя бы одну цифру")
     if not any(char.isalpha() for char in password):
-        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы одну букву")
+        errors.append("Пароль должен содержать хотя бы одну букву")
     if not any(char in "!@#$%^&*()-_+=<>?/.,:;" for char in password):
-        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы один специальный символ: "
-                                                    "!@#$%^&*()-_+=<>?/.,:;")
+        errors.append("Пароль должен содержать хотя бы один специальный символ: "
+                      "!@#$%^&*()-_+=<>?/.,:;")
     if password != doublepassword:
-        raise HTTPException(status_code=400, detail="Пароли не совпадают")
+        errors.append("Пароли не совпадают")
+
+    # Если есть ошибки, возвращаем страницу регистрации с сообщениями об ошибках
+    if errors:
+        return templates.TemplateResponse("register.html", {"request": request, "errors": errors})
 
     # Проверка наличия пользователя с таким же email в базе данных
     cursor.execute('SELECT * FROM Users WHERE email = ?', (email,))
     existing_user = cursor.fetchone()
     if existing_user:
-        raise HTTPException(status_code=400, detail="Пользователь с таким адресом электронной почты "
-                                                    "уже зарегистрирован")
+        errors.append("Пользователь с таким адресом электронной почты уже зарегистрирован")
+        return templates.TemplateResponse("register.html", {"request": request, "errors": errors})
 
     # Проверка наличия пользователя с таким же логином в базе данных
     cursor.execute('SELECT * FROM Users WHERE login = ?', (login,))
     existing_login = cursor.fetchone()
     if existing_login:
-        raise HTTPException(status_code=400, detail="Пользователь с таким логином уже зарегистрирован")
+        errors.append("Пользователь с таким логином уже зарегистрирован")
+        return templates.TemplateResponse("register.html", {"request": request, "errors": errors})
 
     # Хэширование пароля и добавление пользователя в базу данных
     hashed_password = get_password_hash(password)
@@ -365,7 +560,9 @@ async def show_login_form(request: Request):
 async def login_user(request: Request, login: str = Form(...), password: str = Form(...)):
     """
     Функция для авторизации пользователя
+
     Функция предназначена для того, чтобы аутентифицировать пользователя, используя предоставленные им логин и пароль
+
     Args:
         request:
         login:
@@ -376,8 +573,8 @@ async def login_user(request: Request, login: str = Form(...), password: str = F
     """
     authenticated = await authenticate_user(login, password, cursor)
     if not authenticated:
-        raise HTTPException(status_code=401, detail="Неправильный логин или пароль")
-
+        errors = ["Неправильный логин или пароль"]
+        return templates.TemplateResponse("login.html", {"request": request, "errors": errors})
     return templates.TemplateResponse("login.html", {"request": request})
 
 
@@ -385,26 +582,24 @@ async def login_user(request: Request, login: str = Form(...), password: str = F
 async def get_user_info(request: Request, login: str):
     cursor.execute('SELECT * FROM Users WHERE login = ?', (login,))
     user_data = cursor.fetchone()
-
     if user_data is None:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    # Form the name of the history table dynamically based on the login
-    history_table_name = f'History_of_Operations_{user_data[0]}'  # Assuming user_data[0] is the operation_id
-
-    # Fetch active bookings for the user
-    cursor.execute(f'SELECT * FROM {history_table_name} WHERE date >= date("now")')
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    cursor.execute(f'''
+        SELECT * FROM History_of_Operations 
+        WHERE booker = ? AND date >= date('now')
+    ''', (login,))
     active_bookings = cursor.fetchall()
-
-    # Fetch booking history for the user
-    cursor.execute(f'SELECT * FROM {history_table_name} WHERE date < date("now")')
+    cursor.execute(f'''
+        SELECT * FROM History_of_Operations 
+        WHERE booker = ? AND date < date('now')
+    ''', (login,))
     booking_history = cursor.fetchall()
     cursor.execute("SELECT room_name FROM Rooms_Information")
     room_data = cursor.fetchall()
-
     return templates.TemplateResponse("lk.html", {"request": request, "user_data": user_data,
                                                   "active_bookings": active_bookings,
                                                   "booking_history": booking_history, "room_data": room_data})
+
 
 def access_permission(type_of_operation: str, login: str):
     """
@@ -421,6 +616,98 @@ def access_permission(type_of_operation: str, login: str):
     role = cursor.fetchone()
     if type_of_operation in ("booking", "unnbooking") and role[0] < 'B':
         raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
-    elif type_of_operation in ("unnbooking other user", "adding room") and role[0] < 'C':
+    elif type_of_operation in "unnbooking other user" and role[0] < 'C':
         raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
     return "Operation is allowed"
+
+
+@app.get("/calendar", response_class=HTMLResponse)
+def show_calendar(request: Request, date: str):
+    free_rooms = get_free_gaps_for_rooms(date)
+
+    return templates.TemplateResponse("main_page.html", {"request": request})
+
+
+@app.post("/get_info", response_class=HTMLResponse)
+def show_graphics(request: Request, month: str, room_name: str):
+    months = {"January": "01",
+              "February": "02",
+              "March": "03",
+              "April": "04",
+              "May": "05",
+              "June": "06",
+              "July": "07",
+              "August": "08",
+              "September": "09",
+              "October": "10",
+              "November": "11",
+              "December": "12"
+              }
+    cur_mon = months[month]
+
+    if int(cur_mon) == 2:
+        x = [i for i in range(1, 30)]
+    elif int(cur_mon) % 2 == 0:
+        x = [i for i in range(1, 31)]
+    else:
+        x = [i for i in range(1, 32)]
+
+    y = []
+    for day in range(1, len(x) + 1):
+        s = str(day)
+        if len(s) == 1:
+            cur_day = f'0{s}.{cur_mon}'
+        elif len(s) == 2:
+            cur_day = f'{s}.{cur_mon}'
+        else:
+            print("TROUBLE")
+
+        free_gaps = get_free_gaps_for_rooms(cur_day)
+        all_book_time = 0
+        all_free_time = len(free_gaps.keys()) * 540
+        for room in free_gaps.keys():
+            gaps = free_gaps[room]
+            free_time = 0
+            for time in gaps:
+                time_from = time.split("-")[0]
+                time_to = time.split("-")[1]
+                time_from_int = int(time_from.split(":")[0]) * 60 + int(time_from.split(":")[1])
+                time_to_int = int(time_to.split(":")[0]) * 60 + int(time_to.split(":")[1])
+                free_time = free_time + (time_to_int - time_from_int)
+            book_time = 540 - free_time
+            all_book_time += book_time
+        percent = round((all_book_time / all_free_time) * 100)
+        y.append(percent)
+    plt.bar(x, y, label='Занятость')
+    plt.xlabel('День')
+    plt.ylabel('Занятость')
+    plt.title('Занятость комнат на протяжении месяца')
+    plt.legend()
+    temp_file = "temp_graph.png"
+    plt.savefig(temp_file)
+    with open(temp_file, "rb") as image_file:
+        encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
+    return templates.TemplateResponse("graphics.html", {"request": request, "graph_image": temp_file})
+
+
+# Пока не работает
+@app.get("/booking_recommendation")
+def booking_recommendation(login: str, date: str):
+    cursor.execute("SELECT room_name, time_from, time_to FROM History_of_Operations WHERE booker = ?,"
+                   "type_of_operation = booking", (login, ))
+    info = cursor.fetchall()
+    stats = {}
+    for operation in info:
+        if stats[operation[0]]:
+            stats[operation[0]]["cnt"] += 1
+            stats[operation[0]]["time_from"].append(operation[1])
+            stats[operation[0]]["time_to"].append(operation[2])
+        else:
+            stats[operation[0]] = {"cnt": 1, "time_from": [operation[1]], "time_to": [operation[2]]}
+    recommended_rooms = []
+    for room in stats.keys():
+        free_time = get_free_gaps_for_one_room(date, room)[room]
+        cnt = stats[room]["cnt"]
+        time_from = sum(stats[room]["time_from"]) / cnt
+        time_to = sum(stats[room]["time_to"]) / cnt
+        time_check(free_time, time_from, time_to)
