@@ -724,26 +724,22 @@ def show_graphics(request: Request, month: str, room_name: str):
         else:
             print("TROUBLE")
 
-        free_gaps = get_free_gaps_for_rooms(cur_day)
-        all_book_time = 0
-        all_free_time = len(free_gaps.keys()) * 540
-        for room in free_gaps.keys():
-            gaps = free_gaps[room]
-            free_time = 0
-            for time in gaps:
-                time_from = time.split("-")[0]
-                time_to = time.split("-")[1]
-                time_from_int = int(time_from.split(":")[0]) * 60 + int(time_from.split(":")[1])
-                time_to_int = int(time_to.split(":")[0]) * 60 + int(time_to.split(":")[1])
-                free_time = free_time + (time_to_int - time_from_int)
-            book_time = 540 - free_time
-            all_book_time += book_time
-        percent = round((all_book_time / all_free_time) * 100)
+        gaps = get_free_gaps_for_one_room(cur_day, room_name)[room_name]
+        free_time = 0
+        for time in gaps:
+            time_from = time.split("-")[0]
+            time_to = time.split("-")[1]
+            time_from_int = int(time_from.split(":")[0]) * 60 + int(time_from.split(":")[1])
+            time_to_int = int(time_to.split(":")[0]) * 60 + int(time_to.split(":")[1])
+            free_time = free_time + (time_to_int - time_from_int)
+        book_time = 540 - free_time
+        percent = round((book_time / 540) * 100)
         y.append(percent)
+
     plt.bar(x, y, label='Занятость')
     plt.xlabel('День')
     plt.ylabel('Занятость')
-    plt.title('Занятость комнат на протяжении месяца')
+    plt.title('Занятость комнаты на протяжении месяца')
     plt.legend()
     temp_file = "temp_graph.png"
     plt.savefig(temp_file)
@@ -755,28 +751,40 @@ def show_graphics(request: Request, month: str, room_name: str):
 # Пока не работает
 @app.get("/booking_recommendation")
 def booking_recommendation(login: str, date: str):
-    cursor.execute("SELECT room_name, time_from, time_to FROM History_of_Operations WHERE booker = ?,"
-                   "type_of_operation = booking", (login, ))
+    cursor.execute('SELECT room_name, time_from, time_to FROM History_of_Operations WHERE booker = ?'
+                   ' AND type_of_operation = ?', (login, "booking"))
     info = cursor.fetchall()
     stats = {}
     for operation in info:
-        if stats[operation[0]]:
+        if operation[0] in stats.keys():
             stats[operation[0]]["cnt"] += 1
-            stats[operation[0]]["time_from"].append(operation[1])
-            stats[operation[0]]["time_to"].append(operation[2])
+            stats[operation[0]]["time_from"].append(list(map(int, operation[1].split(':'))))
+            stats[operation[0]]["time_to"].append(list(map(int, operation[2].split(':'))))
         else:
-            stats[operation[0]] = {"cnt": 1, "time_from": [operation[1]], "time_to": [operation[2]]}
+            stats[operation[0]] = {"cnt": 1, "time_from": [list(map(int, operation[1].split(':')))],
+                                   "time_to": [list(map(int, operation[2].split(':')))]}
+    stats = dict(sorted(stats.items()))
     recommended_rooms = []
     for room in stats.keys():
         free_time = get_free_gaps_for_one_room(date, room)[room]
         cnt = stats[room]["cnt"]
-        time_from = sum(stats[room]["time_from"]) / cnt
-        time_to = sum(stats[room]["time_to"]) / cnt
-        time_check(free_time, time_from, time_to)
+        time_from = sum([i[0] * 60 + i[1] for i in stats[room]["time_from"]]) // cnt
+        time_to = sum([i[0] * 60 + i[1] for i in stats[room]["time_to"]]) // cnt
+        time_from_str = str(time_from // 60) + ':' + str(time_from % 60)
+        time_to_str = str(time_to // 60) + ':' + str(time_to % 60)
+        print(free_time, time_from_str, time_to_str)
+        try:
+            time_check(free_time, time_from_str, time_to_str)
+        except ThisTimeHasAlreadyBeenBooked:
+            continue
+        recommended_rooms.append(room)
+        if len(recommended_rooms) == 3:
+            break
+    return recommended_rooms
 
 
-@app.get("/user_info")
-async def notifications(login: str):
+@app.get("/notifications")
+def notifications(login: str):
     today = date.today()
     d = str(today).split("-")
     cur_day = d[2]
@@ -800,5 +808,5 @@ async def notifications(login: str):
         if (0 <= (int(b_day) - int(cur_day)) <= 2) and (cur_mon == b_month) and (cur_year == b_year):
             notif = f'You have booked room {r_name} from {time_from} to {time_to} on {b_date}'
             nfs.append(notif)
-    return JSONResponse(content=nfs)
-
+    return nfs
+  
