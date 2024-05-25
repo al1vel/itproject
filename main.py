@@ -1,4 +1,5 @@
 import base64
+import datetime
 import sqlite3
 from fastapi import Request, Form
 from fastapi import FastAPI, HTTPException
@@ -10,6 +11,9 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import matplotlib.pyplot as plt
 from datetime import date
+from fastapi.responses import JSONResponse
+import aiosqlite
+
 
 initialize_database()
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
@@ -48,6 +52,14 @@ class UserRegistration(BaseModel):
     login: str
     pass_level: str
     email: EmailStr
+
+
+class BookingCancellation(BaseModel):
+    login: str
+    room_name: str
+    date: str
+    time_from: str
+    time_to: str
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -145,41 +157,41 @@ def time_check(the_list_of_free_time, time_from, time_to):
         raise ThisTimeHasAlreadyBeenBooked(status_code=400, detail="This time has already been booked")
 
 
-@app.delete("/main_page")
-def unnbook(login: str, room_name: str, date: str, time_from: str, time_to: str):
+@app.delete("/user_info")
+async def cancel_booking(booking_data: BookingCancellation):
     """
     Функция API для отмены бронирования комнаты.
 
-    Функция удаляет бронь комнаты из базе данных в таблице "История операций".
+    Функция удаляет бронь комнаты из базы данных в таблице "История операций".
 
     Args:
-        login: string
-        room_name:  string
-        date: string in format **.**.****
-        time_from: string in format **:**
-        time_to: string in format **:**
+        booking_data: JSON с полями login, room_name, date, time_from, time_to
 
     Returns:
         nothing
     """
-    cursor.execute(f'SELECT type_of_operation FROM History_of_Operations WHERE room_name = ? AND date = ? AND '
-                   f'time_from = ? AND time_to = ?', (room_name, date, time_from, time_to))
-    type_op = cursor.fetchall()
-    if type_op[0][0] != "booking":
-        return "Unsupportable for this operation"
+    room_name = booking_data.room_name
+    date = booking_data.date
+    time_from = booking_data.time_from
+    time_to = booking_data.time_to
+
     try:
-        cursor.execute(f'SELECT type_of_operation FROM History_of_Operations WHERE room_name = ? AND date = ? AND '
-                       f'time_from = ? AND time_to = ?', (room_name, date, time_from, time_to))
+        cursor.execute(
+            'SELECT booker FROM History_of_Operations WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?',
+            (room_name, date, time_from, time_to))
         booker = cursor.fetchall()
-        if login == booker[0][0]:
-            access_permission("unnbooking", login)
+        if booking_data.login == booker[0][0]:
+            access_permission("unbooking", booking_data.login)
         else:
-            access_permission("unnbooking other user", login)
+            access_permission("unbooking other user", booking_data.login)
     except NotEnoughRights:
-        print("This User hasn`t enough rights")
-        return "This User hasn`t enough rights"
-    cursor.execute(f'SELECT type_of_operation FROM History_of_Operations WHERE room_name = ? AND date = ? AND '
-                   f'time_from = ? AND time_to = ?', (room_name, date, time_from, time_to))
+        print("This User hasn't enough rights")
+        raise HTTPException(status_code=403, detail="This User hasn't enough rights")
+
+    cursor.execute(
+        'DELETE FROM History_of_Operations WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?',
+        (room_name, date, time_from, time_to))
+    return
 
 
 @app.get("/all_history")
@@ -630,17 +642,18 @@ async def login_user(request: Request, login: str = Form(...), password: str = F
 async def get_user_info(request: Request, login: str):
     cursor.execute('SELECT * FROM Users WHERE login = ?', (login,))
     user_data = cursor.fetchone()
+    current_date = datetime.datetime.now().strftime("%d.%m.%Y")
     if user_data is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
     cursor.execute(f'''
         SELECT * FROM History_of_Operations 
-        WHERE booker = ? AND date >= date('now')
-    ''', (login,))
+        WHERE booker = ? AND date >= ?
+    ''', (login, current_date))
     active_bookings = cursor.fetchall()
     cursor.execute(f'''
         SELECT * FROM History_of_Operations 
-        WHERE booker = ? AND date < date('now')
-    ''', (login,))
+        WHERE booker = ? AND date < ?
+    ''', (login, current_date))
     booking_history = cursor.fetchall()
     cursor.execute("SELECT room_name FROM Rooms_Information")
     room_data = cursor.fetchall()
@@ -710,22 +723,26 @@ def show_graphics(request: Request, month: str, room_name: str):
         else:
             print("TROUBLE")
 
-        gaps = get_free_gaps_for_one_room(cur_day, room_name)[room_name]
-        free_time = 0
-        for time in gaps:
-            time_from = time.split("-")[0]
-            time_to = time.split("-")[1]
-            time_from_int = int(time_from.split(":")[0]) * 60 + int(time_from.split(":")[1])
-            time_to_int = int(time_to.split(":")[0]) * 60 + int(time_to.split(":")[1])
-            free_time = free_time + (time_to_int - time_from_int)
-        book_time = 540 - free_time
-        percent = round((book_time / 540) * 100)
+        free_gaps = get_free_gaps_for_rooms(cur_day)
+        all_book_time = 0
+        all_free_time = len(free_gaps.keys()) * 540
+        for room in free_gaps.keys():
+            gaps = free_gaps[room]
+            free_time = 0
+            for time in gaps:
+                time_from = time.split("-")[0]
+                time_to = time.split("-")[1]
+                time_from_int = int(time_from.split(":")[0]) * 60 + int(time_from.split(":")[1])
+                time_to_int = int(time_to.split(":")[0]) * 60 + int(time_to.split(":")[1])
+                free_time = free_time + (time_to_int - time_from_int)
+            book_time = 540 - free_time
+            all_book_time += book_time
+        percent = round((all_book_time / all_free_time) * 100)
         y.append(percent)
-
     plt.bar(x, y, label='Занятость')
     plt.xlabel('День')
     plt.ylabel('Занятость')
-    plt.title('Занятость комнаты на протяжении месяца')
+    plt.title('Занятость комнат на протяжении месяца')
     plt.legend()
     temp_file = "temp_graph.png"
     plt.savefig(temp_file)
@@ -757,8 +774,8 @@ def booking_recommendation(login: str, date: str):
         time_check(free_time, time_from, time_to)
 
 
-@app.get("/notifications")
-def notifications(login: str):
+@app.get("/user_info")
+async def notifications(login: str):
     today = date.today()
     d = str(today).split("-")
     cur_day = d[2]
@@ -782,4 +799,4 @@ def notifications(login: str):
         if (0 <= (int(b_day) - int(cur_day)) <= 2) and (cur_mon == b_month) and (cur_year == b_year):
             notif = f'You have booked room {r_name} from {time_from} to {time_to} on {b_date}'
             nfs.append(notif)
-    return nfs
+    return JSONResponse(content=nfs)
