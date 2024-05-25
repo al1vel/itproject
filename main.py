@@ -1,4 +1,3 @@
-import base64
 import sqlite3
 from fastapi import Request, Form
 from fastapi import FastAPI, HTTPException
@@ -9,7 +8,6 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import matplotlib.pyplot as plt
-from datetime import date
 
 initialize_database()
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
@@ -129,6 +127,7 @@ def time_check(the_list_of_free_time, time_from, time_to):
     fl = 0
     for time in the_list_of_free_time:
         time = time.replace(' ', '').replace('-', ' ').replace(':', ' ')
+        print(time)
         hours_from_free, min_from_free, hours_to_free, min_to_free = map(int, time.split())
         hours_from, min_from = map(int, time_from.split(':'))
         hours_to, min_to = map(int, time_to.split(':'))
@@ -144,41 +143,49 @@ def time_check(the_list_of_free_time, time_from, time_to):
         raise ThisTimeHasAlreadyBeenBooked(status_code=400, detail="This time has already been booked")
 
 
-@app.delete("/main_page")
-def unnbook(login: str, room_name: str, date: str, time_from: str, time_to: str):
+class BookingCancellation(BaseModel):
+    login: str
+    room_name: str
+    date: str
+    time_from: str
+    time_to: str
+
+
+@app.delete("/user_info")
+async def cancel_booking(booking_data: BookingCancellation):
     """
     Функция API для отмены бронирования комнаты.
 
-    Функция удаляет бронь комнаты из базе данных в таблице "История операций".
+    Функция удаляет бронь комнаты из базы данных в таблице "История операций".
 
     Args:
-        login: string
-        room_name:  string
-        date: string in format **.**.****
-        time_from: string in format **:**
-        time_to: string in format **:**
+        booking_data: JSON с полями login, room_name, date, time_from, time_to
 
     Returns:
         nothing
     """
-    cursor.execute(f'SELECT type_of_operation FROM History_of_Operations WHERE room_name = ? AND date = ? AND '
-                   f'time_from = ? AND time_to = ?', (room_name, date, time_from, time_to))
-    type_op = cursor.fetchall()
-    if type_op[0][0] != "booking":
-        return "Unsupportable for this operation"
+    room_name = booking_data.room_name
+    date = booking_data.date
+    time_from = booking_data.time_from
+    time_to = booking_data.time_to
+
     try:
-        cursor.execute(f'SELECT type_of_operation FROM History_of_Operations WHERE room_name = ? AND date = ? AND '
-                       f'time_from = ? AND time_to = ?', (room_name, date, time_from, time_to))
+        cursor.execute(
+            'SELECT booker FROM History_of_Operations WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?',
+            (room_name, date, time_from, time_to))
         booker = cursor.fetchall()
-        if login == booker[0][0]:
-            access_permission("unnbooking", login)
+        if booking_data.login == booker[0][0]:
+            access_permission("unbooking", booking_data.login)
         else:
-            access_permission("unnbooking other user", login)
+            access_permission("unbooking other user", booking_data.login)
     except NotEnoughRights:
-        print("This User hasn`t enough rights")
-        return "This User hasn`t enough rights"
-    cursor.execute(f'SELECT type_of_operation FROM History_of_Operations WHERE room_name = ? AND date = ? AND '
-                   f'time_from = ? AND time_to = ?', (room_name, date, time_from, time_to))
+        print("This User hasn't enough rights")
+        raise HTTPException(status_code=403, detail="This User hasn't enough rights")
+
+    cursor.execute(
+        'DELETE FROM History_of_Operations WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?',
+        (room_name, date, time_from, time_to))
+    return
 
 
 @app.get("/all_history")
@@ -663,7 +670,7 @@ def access_permission(type_of_operation: str, login: str):
     role = cursor.fetchone()
     if type_of_operation in ("booking", "unnbooking") and role[0] < 'B':
         raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
-    elif type_of_operation in ("unnbooking other user", "check all history") and role[0] < 'C':
+    elif type_of_operation in "unnbooking other user" and role[0] < 'C':
         raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
     return "Operation is allowed"
 
@@ -794,4 +801,3 @@ def notifications(login: str):
             notif = f'You have booked room {r_name} from {time_from} to {time_to} on {b_date}'
             nfs.append(notif)
     return nfs
-
