@@ -9,6 +9,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import matplotlib.pyplot as plt
+from datetime import date
 
 initialize_database()
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
@@ -128,6 +129,7 @@ def time_check(the_list_of_free_time, time_from, time_to):
     fl = 0
     for time in the_list_of_free_time:
         time = time.replace(' ', '').replace('-', ' ').replace(':', ' ')
+        print(time)
         hours_from_free, min_from_free, hours_to_free, min_to_free = map(int, time.split())
         hours_from, min_from = map(int, time_from.split(':'))
         hours_to, min_to = map(int, time_to.split(':'))
@@ -143,7 +145,7 @@ def time_check(the_list_of_free_time, time_from, time_to):
         raise ThisTimeHasAlreadyBeenBooked(status_code=400, detail="This time has already been booked")
 
 
-@app.delete("/user_info")
+@app.delete("/main_page")
 def unnbook(login: str, room_name: str, date: str, time_from: str, time_to: str):
     """
     Функция API для отмены бронирования комнаты.
@@ -160,27 +162,24 @@ def unnbook(login: str, room_name: str, date: str, time_from: str, time_to: str)
     Returns:
         nothing
     """
-    cursor.execute(
-        'SELECT type_of_operation FROM History_of_Operations WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?',
-        (room_name, date, time_from, time_to))
+    cursor.execute(f'SELECT type_of_operation FROM History_of_Operations WHERE room_name = ? AND date = ? AND '
+                   f'time_from = ? AND time_to = ?', (room_name, date, time_from, time_to))
     type_op = cursor.fetchall()
-    if type_op and type_op[0][0] != "booking":
+    if type_op[0][0] != "booking":
         return "Unsupportable for this operation"
     try:
-        cursor.execute(
-            'SELECT booker FROM History_of_Operations WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?',
-            (room_name, date, time_from, time_to))
+        cursor.execute(f'SELECT type_of_operation FROM History_of_Operations WHERE room_name = ? AND date = ? AND '
+                       f'time_from = ? AND time_to = ?', (room_name, date, time_from, time_to))
         booker = cursor.fetchall()
-        if booker and login == booker[0][0]:
+        if login == booker[0][0]:
             access_permission("unnbooking", login)
         else:
             access_permission("unnbooking other user", login)
     except NotEnoughRights:
-        print("This User hasn't enough rights")
-        return "This User hasn't enough rights"
-    cursor.execute(
-        'DELETE FROM History_of_Operations WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?',
-        (room_name, date, time_from, time_to))
+        print("This User hasn`t enough rights")
+        return "This User hasn`t enough rights"
+    cursor.execute(f'SELECT type_of_operation FROM History_of_Operations WHERE room_name = ? AND date = ? AND '
+                   f'time_from = ? AND time_to = ?', (room_name, date, time_from, time_to))
 
 
 @app.get("/all_history")
@@ -391,11 +390,6 @@ def filter_rooms(capacity=0, location=None, eq_proj=None, eq_board=None):
     else:
         all_rn = []
     return all_rn
-
-
-@app.get("/main_page")
-async def main_page(request: Request):
-    return templates.TemplateResponse("main_page.html", {"request": request})
 
 
 @app.get("/free_gaps")
@@ -743,33 +737,49 @@ def show_graphics(request: Request, month: str, room_name: str):
 # Пока не работает
 @app.get("/booking_recommendation")
 def booking_recommendation(login: str, date: str):
-    cursor.execute('SELECT room_name, time_from, time_to FROM History_of_Operations WHERE booker = ?'
-                   ' AND type_of_operation = ?', (login, "booking"))
+    cursor.execute("SELECT room_name, time_from, time_to FROM History_of_Operations WHERE booker = ?,"
+                   "type_of_operation = booking", (login, ))
     info = cursor.fetchall()
     stats = {}
     for operation in info:
-        if operation[0] in stats.keys():
+        if stats[operation[0]]:
             stats[operation[0]]["cnt"] += 1
-            stats[operation[0]]["time_from"].append(list(map(int, operation[1].split(':'))))
-            stats[operation[0]]["time_to"].append(list(map(int, operation[2].split(':'))))
+            stats[operation[0]]["time_from"].append(operation[1])
+            stats[operation[0]]["time_to"].append(operation[2])
         else:
-            stats[operation[0]] = {"cnt": 1, "time_from": [list(map(int, operation[1].split(':')))],
-                                   "time_to": [list(map(int, operation[2].split(':')))]}
-    stats = dict(sorted(stats.items()))
+            stats[operation[0]] = {"cnt": 1, "time_from": [operation[1]], "time_to": [operation[2]]}
     recommended_rooms = []
     for room in stats.keys():
         free_time = get_free_gaps_for_one_room(date, room)[room]
         cnt = stats[room]["cnt"]
-        time_from = sum([i[0] * 60 + i[1] for i in stats[room]["time_from"]]) // cnt
-        time_to = sum([i[0] * 60 + i[1] for i in stats[room]["time_to"]]) // cnt
-        time_from_str = str(time_from // 60) + ':' + str(time_from % 60)
-        time_to_str = str(time_to // 60) + ':' + str(time_to % 60)
-        print(free_time, time_from_str, time_to_str)
-        try:
-            time_check(free_time, time_from_str, time_to_str)
-        except ThisTimeHasAlreadyBeenBooked:
-            continue
-        recommended_rooms.append(room)
-        if len(recommended_rooms) == 3:
-            break
-    return recommended_rooms
+        time_from = sum(stats[room]["time_from"]) / cnt
+        time_to = sum(stats[room]["time_to"]) / cnt
+        time_check(free_time, time_from, time_to)
+
+
+@app.get("/notifications")
+def notifications(login: str):
+    today = date.today()
+    d = str(today).split("-")
+    cur_day = d[2]
+    cur_mon = d[1]
+    cur_year = d[0]
+
+    cursor.execute(f'SELECT room_name, date, time_from, time_to FROM History_of_Operations WHERE booker = "{login}" '
+                   f'AND type_of_operation = "booking"')
+    bookings = cursor.fetchall()
+
+    nfs = []
+    for booking in bookings:
+        r_name = booking[0]
+        b_date = booking[1]
+        time_from = booking[2]
+        time_to = booking[3]
+
+        b_day = booking[1].split(".")[0]
+        b_month = booking[1].split(".")[1]
+        b_year = booking[1].split(".")[2]
+        if (0 <= (int(b_day) - int(cur_day)) <= 2) and (cur_mon == b_month) and (cur_year == b_year):
+            notif = f'You have booked room {r_name} from {time_from} to {time_to} on {b_date}'
+            nfs.append(notif)
+    return nfs
