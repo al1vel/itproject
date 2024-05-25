@@ -753,7 +753,6 @@ def booking_recommendation(login: str, date: str):
     for room in stats.keys():
         free_time = get_free_gaps_for_one_room(date, room)[room]
         cnt = stats[room]["cnt"]
-        continuation_of_booking_recommendation
         time_from = sum([i[0] * 60 + i[1] for i in stats[room]["time_from"]]) // cnt
         time_to = sum([i[0] * 60 + i[1] for i in stats[room]["time_to"]]) // cnt
         time_from_str = str(time_from // 60) + ':' + str(time_from % 60)
