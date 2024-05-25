@@ -1,5 +1,3 @@
-import base64
-import datetime
 import sqlite3
 from fastapi import Request, Form
 from fastapi import FastAPI, HTTPException
@@ -10,10 +8,6 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import matplotlib.pyplot as plt
-from datetime import date
-from fastapi.responses import JSONResponse
-import aiosqlite
-
 
 initialize_database()
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
@@ -52,14 +46,6 @@ class UserRegistration(BaseModel):
     login: str
     pass_level: str
     email: EmailStr
-
-
-class BookingCancellation(BaseModel):
-    login: str
-    room_name: str
-    date: str
-    time_from: str
-    time_to: str
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -141,6 +127,7 @@ def time_check(the_list_of_free_time, time_from, time_to):
     fl = 0
     for time in the_list_of_free_time:
         time = time.replace(' ', '').replace('-', ' ').replace(':', ' ')
+        print(time)
         hours_from_free, min_from_free, hours_to_free, min_to_free = map(int, time.split())
         hours_from, min_from = map(int, time_from.split(':'))
         hours_to, min_to = map(int, time_to.split(':'))
@@ -154,6 +141,14 @@ def time_check(the_list_of_free_time, time_from, time_to):
         break
     if fl == 0:
         raise ThisTimeHasAlreadyBeenBooked(status_code=400, detail="This time has already been booked")
+
+
+class BookingCancellation(BaseModel):
+    login: str
+    room_name: str
+    date: str
+    time_from: str
+    time_to: str
 
 
 @app.delete("/user_info")
@@ -641,18 +636,17 @@ async def login_user(request: Request, login: str = Form(...), password: str = F
 async def get_user_info(request: Request, login: str):
     cursor.execute('SELECT * FROM Users WHERE login = ?', (login,))
     user_data = cursor.fetchone()
-    current_date = datetime.datetime.now().strftime("%d.%m.%Y")
     if user_data is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
     cursor.execute(f'''
         SELECT * FROM History_of_Operations 
-        WHERE booker = ? AND date >= ?
-    ''', (login, current_date))
+        WHERE booker = ? AND date >= date('now')
+    ''', (login,))
     active_bookings = cursor.fetchall()
     cursor.execute(f'''
         SELECT * FROM History_of_Operations 
-        WHERE booker = ? AND date < ?
-    ''', (login, current_date))
+        WHERE booker = ? AND date < date('now')
+    ''', (login,))
     booking_history = cursor.fetchall()
     cursor.execute("SELECT room_name FROM Rooms_Information")
     room_data = cursor.fetchall()
@@ -676,7 +670,7 @@ def access_permission(type_of_operation: str, login: str):
     role = cursor.fetchone()
     if type_of_operation in ("booking", "unnbooking") and role[0] < 'B':
         raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
-    elif type_of_operation in ("unnbooking other user", "check all history") and role[0] < 'C':
+    elif type_of_operation in "unnbooking other user" and role[0] < 'C':
         raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
     return "Operation is allowed"
 
@@ -753,62 +747,21 @@ def show_graphics(request: Request, month: str, room_name: str):
 # Пока не работает
 @app.get("/booking_recommendation")
 def booking_recommendation(login: str, date: str):
-    cursor.execute('SELECT room_name, time_from, time_to FROM History_of_Operations WHERE booker = ?'
-                   ' AND type_of_operation = ?', (login, "booking"))
+    cursor.execute("SELECT room_name, time_from, time_to FROM History_of_Operations WHERE booker = ?,"
+                   "type_of_operation = booking", (login, ))
     info = cursor.fetchall()
     stats = {}
     for operation in info:
-        if operation[0] in stats.keys():
+        if stats[operation[0]]:
             stats[operation[0]]["cnt"] += 1
-            stats[operation[0]]["time_from"].append(list(map(int, operation[1].split(':'))))
-            stats[operation[0]]["time_to"].append(list(map(int, operation[2].split(':'))))
+            stats[operation[0]]["time_from"].append(operation[1])
+            stats[operation[0]]["time_to"].append(operation[2])
         else:
-            stats[operation[0]] = {"cnt": 1, "time_from": [list(map(int, operation[1].split(':')))],
-                                   "time_to": [list(map(int, operation[2].split(':')))]}
-    stats = dict(sorted(stats.items()))
+            stats[operation[0]] = {"cnt": 1, "time_from": [operation[1]], "time_to": [operation[2]]}
     recommended_rooms = []
     for room in stats.keys():
         free_time = get_free_gaps_for_one_room(date, room)[room]
         cnt = stats[room]["cnt"]
-        time_from = sum([i[0] * 60 + i[1] for i in stats[room]["time_from"]]) // cnt
-        time_to = sum([i[0] * 60 + i[1] for i in stats[room]["time_to"]]) // cnt
-        time_from_str = str(time_from // 60) + ':' + str(time_from % 60)
-        time_to_str = str(time_to // 60) + ':' + str(time_to % 60)
-        print(free_time, time_from_str, time_to_str)
-        try:
-            time_check(free_time, time_from_str, time_to_str)
-        except ThisTimeHasAlreadyBeenBooked:
-            continue
-        recommended_rooms.append(room)
-        if len(recommended_rooms) == 3:
-            break
-    return recommended_rooms
-
-
-@app.get("/user_info")
-async def notifications(login: str):
-    today = date.today()
-    d = str(today).split("-")
-    cur_day = d[2]
-    cur_mon = d[1]
-    cur_year = d[0]
-
-    cursor.execute(f'SELECT room_name, date, time_from, time_to FROM History_of_Operations WHERE booker = "{login}" '
-                   f'AND type_of_operation = "booking"')
-    bookings = cursor.fetchall()
-
-    nfs = []
-    for booking in bookings:
-        r_name = booking[0]
-        b_date = booking[1]
-        time_from = booking[2]
-        time_to = booking[3]
-
-        b_day = booking[1].split(".")[0]
-        b_month = booking[1].split(".")[1]
-        b_year = booking[1].split(".")[2]
-        if (0 <= (int(b_day) - int(cur_day)) <= 2) and (cur_mon == b_month) and (cur_year == b_year):
-            notif = f'You have booked room {r_name} from {time_from} to {time_to} on {b_date}'
-            nfs.append(notif)
-    return JSONResponse(content=nfs)
-
+        time_from = sum(stats[room]["time_from"]) / cnt
+        time_to = sum(stats[room]["time_to"]) / cnt
+        time_check(free_time, time_from, time_to)
