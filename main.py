@@ -143,41 +143,49 @@ def time_check(the_list_of_free_time, time_from, time_to):
         raise ThisTimeHasAlreadyBeenBooked(status_code=400, detail="This time has already been booked")
 
 
-@app.delete("/main_page")
-def unnbook(login: str, room_name: str, date: str, time_from: str, time_to: str):
+class BookingCancellation(BaseModel):
+    login: str
+    room_name: str
+    date: str
+    time_from: str
+    time_to: str
+
+
+@app.delete("/user_info")
+async def cancel_booking(booking_data: BookingCancellation):
     """
     Функция API для отмены бронирования комнаты.
 
-    Функция удаляет бронь комнаты из базе данных в таблице "История операций".
+    Функция удаляет бронь комнаты из базы данных в таблице "История операций".
 
     Args:
-        login: string
-        room_name:  string
-        date: string in format **.**.****
-        time_from: string in format **:**
-        time_to: string in format **:**
+        booking_data: JSON с полями login, room_name, date, time_from, time_to
 
     Returns:
         nothing
     """
-    cursor.execute(f'SELECT type_of_operation FROM History_of_Operations WHERE room_name = ?, date = ?, time_from = ?,'
-                   f'time_to = ?', (room_name, date, time_from, ))
-    type_op = cursor.fetchall()
-    if type_op[0][0] != "booking":
-        return "Unsupportable for this operation"
+    room_name = booking_data.room_name
+    date = booking_data.date
+    time_from = booking_data.time_from
+    time_to = booking_data.time_to
+
     try:
-        cursor.execute(f'SELECT booker FROM History_of_Operations WHERE room_name = ?, date = ?, time_from = ?,'
-                       f'time_to = ?', (room_name, date, time_from, ))
+        cursor.execute(
+            'SELECT booker FROM History_of_Operations WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?',
+            (room_name, date, time_from, time_to))
         booker = cursor.fetchall()
-        if login == booker[0][0]:
-            access_permission("unnbooking", login)
+        if booking_data.login == booker[0][0]:
+            access_permission("unbooking", booking_data.login)
         else:
-            access_permission("unnbooking other user", login)
+            access_permission("unbooking other user", booking_data.login)
     except NotEnoughRights:
-        print("This User hasn`t enough rights")
-        return "This User hasn`t enough rights"
-    cursor.execute(f'DELETE FROM History_of_Operations WHERE room_name = ?, date = ?, time_from = ?,'
-                   f'time_to = ?', (room_name, date, time_from, ))
+        print("This User hasn't enough rights")
+        raise HTTPException(status_code=403, detail="This User hasn't enough rights")
+
+    cursor.execute(
+        'DELETE FROM History_of_Operations WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?',
+        (room_name, date, time_from, time_to))
+    return
 
 
 @app.get("/all_history")
