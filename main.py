@@ -129,7 +129,6 @@ def time_check(the_list_of_free_time, time_from, time_to):
     fl = 0
     for time in the_list_of_free_time:
         time = time.replace(' ', '').replace('-', ' ').replace(':', ' ')
-        print(time)
         hours_from_free, min_from_free, hours_to_free, min_to_free = map(int, time.split())
         hours_from, min_from = map(int, time_from.split(':'))
         hours_to, min_to = map(int, time_to.split(':'))
@@ -737,24 +736,37 @@ def show_graphics(request: Request, month: str, room_name: str):
 # Пока не работает
 @app.get("/booking_recommendation")
 def booking_recommendation(login: str, date: str):
-    cursor.execute("SELECT room_name, time_from, time_to FROM History_of_Operations WHERE booker = ?,"
-                   "type_of_operation = booking", (login, ))
+    cursor.execute('SELECT room_name, time_from, time_to FROM History_of_Operations WHERE booker = ?'
+                   ' AND type_of_operation = ?', (login, "booking"))
     info = cursor.fetchall()
     stats = {}
     for operation in info:
-        if stats[operation[0]]:
+        if operation[0] in stats.keys():
             stats[operation[0]]["cnt"] += 1
-            stats[operation[0]]["time_from"].append(operation[1])
-            stats[operation[0]]["time_to"].append(operation[2])
+            stats[operation[0]]["time_from"].append(list(map(int, operation[1].split(':'))))
+            stats[operation[0]]["time_to"].append(list(map(int, operation[2].split(':'))))
         else:
-            stats[operation[0]] = {"cnt": 1, "time_from": [operation[1]], "time_to": [operation[2]]}
+            stats[operation[0]] = {"cnt": 1, "time_from": [list(map(int, operation[1].split(':')))],
+                                   "time_to": [list(map(int, operation[2].split(':')))]}
+    stats = dict(sorted(stats.items()))
     recommended_rooms = []
     for room in stats.keys():
         free_time = get_free_gaps_for_one_room(date, room)[room]
         cnt = stats[room]["cnt"]
-        time_from = sum(stats[room]["time_from"]) / cnt
-        time_to = sum(stats[room]["time_to"]) / cnt
-        time_check(free_time, time_from, time_to)
+        continuation_of_booking_recommendation
+        time_from = sum([i[0] * 60 + i[1] for i in stats[room]["time_from"]]) // cnt
+        time_to = sum([i[0] * 60 + i[1] for i in stats[room]["time_to"]]) // cnt
+        time_from_str = str(time_from // 60) + ':' + str(time_from % 60)
+        time_to_str = str(time_to // 60) + ':' + str(time_to % 60)
+        print(free_time, time_from_str, time_to_str)
+        try:
+            time_check(free_time, time_from_str, time_to_str)
+        except ThisTimeHasAlreadyBeenBooked:
+            continue
+        recommended_rooms.append(room)
+        if len(recommended_rooms) == 3:
+            break
+    return recommended_rooms
 
 
 @app.get("/notifications")
