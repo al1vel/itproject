@@ -196,14 +196,15 @@ async def cancel_booking(booking_data: BookingCancellation):
     return
 
 
-@app.get("/all_history")
-def all_history(login: str):
+@app.get("/all_history", response_class=HTMLResponse)
+def all_history(request: Request, login: str):
     """
     Функция для визуализации истории операций.
 
     Функция возвращает все данные из таблицы History_of_Operations.
 
     Args:
+        request:
         login: string
 
     Returns:
@@ -216,7 +217,8 @@ def all_history(login: str):
         print("This User hasn`t enough rights")
         return "This User hasn`t enough rights"
     cursor.execute("SELECT * FROM History_of_Operations")
-    return cursor.fetchall()
+    history_data = cursor.fetchall()
+    return templates.TemplateResponse("levelC.html", {"request": request, "history_data": history_data})
 
 
 @app.get("/get_info", response_class=HTMLResponse)
@@ -744,7 +746,7 @@ async def show_graphics(request: Request, month: str, room_name: str):
     plt.legend()
     temp_file = "temp_graph.png"
     plt.savefig(temp_file)
-    return templates.TemplateResponse("graphics.html", {"request": request, "graph_image": temp_file})
+    return templates.TemplateResponse("room.html", {"request": request, "graph_image": temp_file})
 
 
 # Пока не работает
@@ -808,4 +810,3 @@ async def notifications(login: str):
             notif = f'You have booked room {r_name} from {time_from} to {time_to} on {b_date}'
             nfs.append(notif)
     return nfs
-  
