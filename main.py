@@ -794,3 +794,4 @@ def notifications(login: str):
             notif = f'You have booked room {r_name} from {time_from} to {time_to} on {b_date}'
             nfs.append(notif)
     return nfs
+

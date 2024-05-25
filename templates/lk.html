@@ -7,23 +7,26 @@
     <title>Личный кабинет</title>
 </head>
 <body style="background-image: url('static/фон4.png'); background-attachment: fixed;">
+
 <div class="header">
-            <p><span class="header-text1">OFFICE </span><span class="header-text2">FIX</span></p>
-            <button class="button" onclick="toggleDropdown()">
-    <span></span>
-    <span></span>
-    <span></span>
+    <p><span class="header-text1">OFFICE </span><span class="header-text2">FIX</span></p>
+    <button class="button" onclick="toggleDropdown()">
+        <span></span>
+        <span></span>
+        <span></span>
     </button>
 
-<div id="dropdown" class="dropdown" style="display: none;">
-    <select id="pageSelect" onchange="location = this.value;">
+    <div id="dropdown" class="dropdown" style="display: none;">
+        <select id="pageSelect" onchange="location = this.value;">
             <option value="/user_info?login={{ login }}">Личный кабинет</option>
             <option value="/">Выход</option>
             {% for room in room_data %}
             <option value="/get_info?room_name={{ room[0] }}">{{ room[0] }}</option>
             {% endfor %}
-    </select>
-</div></div>
+        </select>
+    </div>
+</div>
+
 <div class="container">
     <div class="profile-container">
         <div class="user-info">
@@ -49,7 +52,7 @@
         <div class="booking-container">
             <div class="active-bookings">Активные бронирования</div>
             {% for booking in active_bookings %}
-            <div class="room-info">
+            <div class="room-info" id="{{ booking[1] }}-{{ booking[4] }}-{{ booking[5] }}-{{ booking[6] }}">
                 <div class="name_room">
                     <p>{{ booking[1] }}</p>
                 </div>
@@ -59,12 +62,13 @@
                 </div>
                 <div class="button-container">
                     <button onclick="redirectToDetails('{{ booking[1] }}')">Подробнее</button>
+                    <button onclick="cancelBooking(login = '{{ login }}', room_name = '{{ booking[1] }}', date = '{{ booking[4] }}', time_from = '{{ booking[5] }}', time_to = '{{ booking[6] }}')">Отменить бронирование</button>
                 </div>
             </div>
             {% endfor %}
         </div>
         <div class="booking-container">
-            <div class="active-bookings">История бронирований</div>
+            <div class="history-bookings">История бронирований</div>
             {% for booking in booking_history %}
             <div class="room-info">
                 <div class="name_room">
@@ -82,17 +86,48 @@
         </div>
     </div>
 </div>
+
 <script>
     function redirectToDetails(room_name) {
         window.location.href = `/get_info?room_name=${room_name}`;
     }
+
     function toggleDropdown() {
         var dropdown = document.getElementById('dropdown');
         dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
     }
+
     document.getElementById('pageSelect').addEventListener('change', function() {
         window.location.href = this.value;
     });
+   function cancelBooking(login, room_name, date, time_from, time_to) {
+    fetch('/user_info', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            login: login,
+            room_name: room_name,
+            date: date,
+            time_from: time_from,
+            time_to: time_to
+        })
+    })
+    .then(response => {
+        if (response.ok) {
+            window.location.reload(); // Обновить страницу после успешного удаления бронирования
+        } else {
+            console.error('Ошибка при отмене бронирования:', response.statusText);
+            // Здесь можно добавить логику для обработки ошибки, например, показ сообщения пользователю
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка при отмене бронирования:', error);
+        // Здесь можно добавить логику для обработки ошибки, например, показ сообщения пользователю
+    });
+}
 </script>
-    </body>
+
+</body>
 </html>
