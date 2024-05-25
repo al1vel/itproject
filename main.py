@@ -336,6 +336,7 @@ def format_time_to_string(free_gaps):
     return free_gaps
 
 
+
 def conjunction_of_list(*lists):
     res = []
     for ls in lists:
