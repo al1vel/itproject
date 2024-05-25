@@ -2,6 +2,7 @@ body {
     background: url(фон2.png);
     background-repeat: no-repeat;
     background-size: cover;
+    user-select: none;
 }
 
 
@@ -27,7 +28,7 @@ body {
     position: relative;
     overflow: hidden;
     z-index: 1;
-    margin: 40px 10px 10px 10px;
+    margin: 20px 10px 10px 10px;
     width: 90%;
     text-align: center;
     border: none;
@@ -96,7 +97,7 @@ form {
     font-weight: bold;
     color: #000000;
     font-family: 'Jomhuria';
-    letter-spacing: .15rem;
+    letter-spacing: .1rem;
 }
 
 .header-text2 {
@@ -104,8 +105,13 @@ form {
     font-weight: bold;
     color: #2C3D95;
     font-family: 'Jomhuria';
-    letter-spacing: .15rem;
+    letter-spacing: .1rem;
 }
 .container {
     text-align: center;
+}
+ul{
+    font-size: 0.9rem;
+    margin: 1rem;
+    padding: 0;
 }

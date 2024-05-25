@@ -1,3 +1,5 @@
+import base64
+import datetime
 import sqlite3
 from datetime import date
 
@@ -10,6 +12,10 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import matplotlib.pyplot as plt
+from datetime import date
+from fastapi.responses import JSONResponse
+import aiosqlite
+
 
 initialize_database()
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
@@ -48,6 +54,14 @@ class UserRegistration(BaseModel):
     login: str
     pass_level: str
     email: EmailStr
+
+
+class BookingCancellation(BaseModel):
+    login: str
+    room_name: str
+    date: str
+    time_from: str
+    time_to: str
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -143,14 +157,6 @@ def time_check(the_list_of_free_time, time_from, time_to):
         break
     if fl == 0:
         raise ThisTimeHasAlreadyBeenBooked(status_code=400, detail="This time has already been booked")
-
-
-class BookingCancellation(BaseModel):
-    login: str
-    room_name: str
-    date: str
-    time_from: str
-    time_to: str
 
 
 @app.delete("/user_info")
@@ -341,6 +347,7 @@ def format_time_to_string(free_gaps):
             new.append(time)
         free_gaps[room] = new
     return free_gaps
+
 
 
 def conjunction_of_list(*lists):
@@ -638,17 +645,18 @@ async def login_user(request: Request, login: str = Form(...), password: str = F
 async def get_user_info(request: Request, login: str):
     cursor.execute('SELECT * FROM Users WHERE login = ?', (login,))
     user_data = cursor.fetchone()
+    current_date = datetime.datetime.now().strftime("%d.%m.%Y")
     if user_data is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
     cursor.execute(f'''
         SELECT * FROM History_of_Operations 
-        WHERE booker = ? AND date >= date('now')
-    ''', (login,))
+        WHERE booker = ? AND date >= ?
+    ''', (login, current_date))
     active_bookings = cursor.fetchall()
     cursor.execute(f'''
         SELECT * FROM History_of_Operations 
-        WHERE booker = ? AND date < date('now')
-    ''', (login,))
+        WHERE booker = ? AND date < ?
+    ''', (login, current_date))
     booking_history = cursor.fetchall()
     cursor.execute("SELECT room_name FROM Rooms_Information")
     room_data = cursor.fetchall()
@@ -672,7 +680,7 @@ def access_permission(type_of_operation: str, login: str):
     role = cursor.fetchone()
     if type_of_operation in ("booking", "unnbooking") and role[0] < 'B':
         raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
-    elif type_of_operation in "unnbooking other user" and role[0] < 'C':
+    elif type_of_operation in ("unnbooking other user", "check all history") and role[0] < 'C':
         raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
     return "Operation is allowed"
 
@@ -800,3 +808,4 @@ async def notifications(login: str):
             notif = f'You have booked room {r_name} from {time_from} to {time_to} on {b_date}'
             nfs.append(notif)
     return nfs
+  

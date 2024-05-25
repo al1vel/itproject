@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="static/lvC.css">
+    <link rel="stylesheet" href="https://fonts.google.com/specimen/Jomhuria">
+</head>
+<body>
+    <div class="header">
+                <p><span class="header-text1">OFFICE </span><span class="header-text2">FIX</span></p>
+                <button class="button" onclick="toggleDropdown()">
+        <span></span>
+        <span></span>
+        <span></span>
+        </button>
+    <div id="dropdown" class="dropdown" style="display: none;">
+        <select id="pageSelect" onchange="location = this.value;">
+                <option value="/user_info?login={{ login }}">Личный кабинет</option>
+                <option value="/">Выход</option>
+                {% for room in room_data %}
+                <option value="/get_info?room_name={{ room[0] }}">{{ room[0] }}</option>
+                {% endfor %}
+        </select>
+    </div></div>
+    <div class="booking-container">
+        <div class="active-bookings">Все активные бронирования</div>
+        {% for booking in active_bookings %}
+            <div class="room-info">
+                <div class="name_room">
+                    <p>{{ booking[1] }}</p>
+                </div>
+                <div class="booking-details">
+                    <p>Дата: {{ booking[4] }}</p>
+                    <p>Время: {{ booking[5] }} - {{ booking[6] }}</p>
+                </div>
+                <div class="button-container">
+                    <button class="btp" onclick="redirectToDetails('{{ booking[1] }}')">Подробнее</button>
+                    <button class="btp" onclick="cancelBooking('{{ login }}', '{{ room_name }}', '{{ date }}', '{{ time_from }}', '{{ time_to }}')">Отменить бронирование</button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+<script>
+    function redirectToDetails(room_name) {
+        window.location.href = `/get_info?room_name=${room_name}`;
+    }
+    function toggleDropdown() {
+        var dropdown = document.getElementById('dropdown');
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
+    document.getElementById('pageSelect').addEventListener('change', function() {
+        window.location.href = this.value;
+    });
+    function cancelBooking(room_name, date, time_from, time_to) {
+        fetch('/user_info', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                login: '{{ login }}',
+                room_name: room_name,
+                date: date,
+                time_from: time_from,
+                time_to: time_to
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка отмены бронирования');
+            }
+            // Перезагружаем страницу после успешной отмены бронирования
+            location.reload();
+        })
+        .catch(error => {
+            console.error('Ошибка отмены бронирования:', error);
+        });
+    }
+</script>
+
+</body>
+</html>
