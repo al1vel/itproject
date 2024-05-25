@@ -159,81 +159,97 @@ def time_check(the_list_of_free_time, time_from, time_to):
 
 
 @app.delete("/user_info")
-async def cancel_booking(booking_data: BookingCancellation):
+async def unnbook(login: str, room_name: str, date: str, time_from: str, time_to: str):
     """
     Функция API для отмены бронирования комнаты.
-
     Функция удаляет бронь комнаты из базы данных в таблице "История операций".
-
     Args:
-        booking_data: JSON с полями login, room_name, date, time_from, time_to
-
+        login: string
+        room_name:  string
+        date: string in format **.**.****
+        time_from: string in format **:**
+        time_to: string in format **:**
     Returns:
-        nothing
+        JSON response
     """
-    room_name = booking_data.room_name
-    date = booking_data.date
-    time_from = booking_data.time_from
-    time_to = booking_data.time_to
+    cursor.execute('''
+        SELECT type_of_operation FROM History_of_Operations 
+        WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?
+    ''', (room_name, date, time_from, time_to))
+    type_op = cursor.fetchall()
+
+    if type_op:
+        if type_op[0][0] != "booking":
+            return {"message": "Unsupportable for this operation"}
+    else:
+        return {"message": "No records found"}
 
     try:
-        cursor.execute(
-            'SELECT booker FROM History_of_Operations WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?',
-            (room_name, date, time_from, time_to))
-        booker = cursor.fetchone()
-        if booker is None:
-            raise HTTPException(status_code=404, detail="Booking not found")
-        if booking_data.login == booker[0]:
-            access_permission("unbooking", booking_data.login)
-        else:
-            access_permission("unbooking other user", booking_data.login)
-    except NotEnoughRights:
-        print("This User hasn't enough rights")
-        raise HTTPException(status_code=403, detail="This User hasn't enough rights")
+        cursor.execute('''
+            SELECT booker FROM History_of_Operations 
+            WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?
+        ''', (room_name, date, time_from, time_to))
+        booker = cursor.fetchall()
 
-    cursor.execute(
-        'DELETE FROM History_of_Operations WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?',
-        (room_name, date, time_from, time_to))
-    return
+        if login == booker[0][0]:
+            access_permission("unnbooking", login)
+    except NotEnoughRights:
+        print("This User hasn`t enough rights")
+        return {"message": "This User hasn`t enough rights"}
+
+    cursor.execute('''
+        DELETE FROM History_of_Operations 
+        WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?
+    ''', (room_name, date, time_from, time_to))
+
+    return {"message": "Booking successfully cancelled"}
 
 
 @app.delete("/all_history")
-async def cancel_booking(booking_data: BookingCancellation):
+async def unbook(login: str, room_name: str, date: str, time_from: str, time_to: str):
     """
     Функция API для отмены бронирования комнаты.
-
     Функция удаляет бронь комнаты из базы данных в таблице "История операций".
-
     Args:
-        booking_data: JSON с полями login, room_name, date, time_from, time_to
-
+        login: string
+        room_name:  string
+        date: string in format **.**.****
+        time_from: string in format **:**
+        time_to: string in format **:**
     Returns:
-        nothing
+        JSON response
     """
-    room_name = booking_data.room_name
-    date = booking_data.date
-    time_from = booking_data.time_from
-    time_to = booking_data.time_to
+    cursor.execute('''
+        SELECT type_of_operation FROM History_of_Operations 
+        WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?
+    ''', (room_name, date, time_from, time_to))
+    type_op = cursor.fetchall()
+
+    if type_op:
+        if type_op[0][0] != "booking":
+            return {"message": "Unsupportable for this operation"}
+    else:
+        return {"message": "No records found"}
 
     try:
-        cursor.execute(
-            'SELECT booker FROM History_of_Operations WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?',
-            (room_name, date, time_from, time_to))
-        booker = cursor.fetchone()
-        if booker is None:
-            raise HTTPException(status_code=404, detail="Booking not found")
-        if booking_data.login == booker[0]:
-            access_permission("unbooking", booking_data.login)
-        else:
-            access_permission("unbooking other user", booking_data.login)
-    except NotEnoughRights:
-        print("This User hasn't enough rights")
-        raise HTTPException(status_code=403, detail="This User hasn't enough rights")
+        cursor.execute('''
+            SELECT booker FROM History_of_Operations 
+            WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?
+        ''', (room_name, date, time_from, time_to))
+        booker = cursor.fetchall()
 
-    cursor.execute(
-        'DELETE FROM History_of_Operations WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?',
-        (room_name, date, time_from, time_to))
-    return
+        if login == booker[0][0]:
+            access_permission("unbooking", login)
+    except NotEnoughRights:
+        print("This User hasn`t enough rights")
+        return {"message": "This User hasn`t enough rights"}
+
+    cursor.execute('''
+        DELETE FROM History_of_Operations 
+        WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?
+    ''', (room_name, date, time_from, time_to))
+
+    return {"message": "Booking successfully cancelled"}
 
 
 
@@ -259,7 +275,9 @@ def all_history(request: Request, login: str):
         return "This User hasn`t enough rights"
     cursor.execute("SELECT * FROM History_of_Operations")
     history_data = cursor.fetchall()
-    return templates.TemplateResponse("levelC.html", {"request": request, "history_data": history_data})
+    cursor.execute("SELECT room_name FROM Rooms_Information")
+    room_data = cursor.fetchall()
+    return templates.TemplateResponse("levelC.html", {"request": request, "history_data": history_data, "room_data": room_data})
 
 
 @app.get("/get_info", response_class=HTMLResponse)
@@ -456,7 +474,10 @@ def filter_rooms(capacity=0, location=None, eq_proj=None, eq_board=None):
         all_rn = all_room_names[0]
     else:
         all_rn = []
-    return all_rn
+    cursor.execute('SELECT DISTINCT location FROM Rooms_Information')
+    locations = cursor.fetchall()
+    location_options = [loc[0] for loc in locations]
+    return all_rn, location_options
 
 
 @app.get("/free_gaps")
@@ -697,18 +718,17 @@ async def login_user(request: Request, login: str = Form(...), password: str = F
 async def get_user_info(request: Request, login: str):
     cursor.execute('SELECT * FROM Users WHERE login = ?', (login,))
     user_data = cursor.fetchone()
-    current_date = datetime.datetime.now().strftime("%d.%m.%Y")
     if user_data is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
     cursor.execute(f'''
         SELECT * FROM History_of_Operations 
-        WHERE booker = ? AND date >= ?
-    ''', (login, current_date))
+        WHERE booker = ? AND date >= date('now') AND type_of_operation = ?
+    ''', (login, 'booking'))
     active_bookings = cursor.fetchall()
     cursor.execute(f'''
         SELECT * FROM History_of_Operations 
-        WHERE booker = ? AND date < ?
-    ''', (login, current_date))
+        WHERE booker = ? AND date < date('now') AND type_of_operation = ?
+    ''', (login, 'booking'))
     booking_history = cursor.fetchall()
     cursor.execute("SELECT room_name FROM Rooms_Information")
     room_data = cursor.fetchall()
@@ -720,22 +740,19 @@ async def get_user_info(request: Request, login: str):
 def access_permission(type_of_operation: str, login: str):
     """
     Функция для проверки наличия прав пользователя
-    Функция предназначена для того, чтобы проверить, может ли пользователь совершить данную операцию
+    Функция презднзначена для того, чтобы проверить, может ли пользователь совершить данную операцию
     Args:
         type_of_operation:
         login:
-
     Returns:
     string = "Operation is allowed"
     """
     cursor.execute('SELECT pass_level FROM Users WHERE login = ?', (login,))
     role = cursor.fetchone()
-    if role is None:
-        raise NotEnoughRights(status_code=404, detail="User not found")
-    elif role == 'A':
-        raise NotEnoughRights(status_code=403, detail="User hasn't enough rights")
-    elif role < 'C' and type_of_operation == "unbooking other user":
-        raise NotEnoughRights(status_code=403, detail="User hasn't enough rights")
+    if type_of_operation in ("booking", "unbooking") and role[0] < 'B':
+        raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
+    elif type_of_operation in ("unbooking other user", "adding room") and role[0] < 'C':
+        raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
     return "Operation is allowed"
 
 

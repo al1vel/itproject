@@ -65,7 +65,7 @@
                 </div>
                 <div class="button-container">
                     <button onclick="redirectToDetails('{{ booking[1] }}')">Подробнее</button>
-                    <button onclick="cancelBooking(login = '{{ login }}', room_name = '{{ booking[1] }}', date = '{{ booking[4] }}', time_from = '{{ booking[5] }}', time_to = '{{ booking[6] }}')">Отменить бронирование</button>
+                    <button onclick="unbookRoom('{{ user_data[2] }}', '{{ booking[1] }}', '{{ booking[4] }}', '{{ booking[5] }}', '{{ booking[6] }}')">Отменить бронирование</button>
                 </div>
             </div>
             {% endfor %}
@@ -103,29 +103,28 @@
     document.getElementById('pageSelect').addEventListener('change', function() {
         window.location.href = this.value;
     });
-   function cancelBooking(login, room_name, date, time_from, time_to) {
-    fetch('/user_info', {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            login: login,
-            room_name: room_name,
-            date: date,
-            time_from: time_from,
-            time_to: time_to
-        })
+  function unbookRoom(login, room_name, date, time_from, time_to) {
+    fetch(`/user_info?login=${login}&room_name=${room_name}&date=${date}&time_from=${time_from}&time_to=${time_to}`, {
+        method: 'DELETE'
     })
     .then(response => {
-        if (response.ok) {
-            window.location.reload(); // Обновить страницу после успешного удаления бронирования
-        } else {
-            console.error('Ошибка при отмене бронирования:', response.statusText);
+        if (!response.ok) {
+            throw new Error('Ошибка удаления бронирования');
         }
+        return response.text();
+    })
+    .then(data => {
+        alert(data); // Показать сообщение об успешной отмене бронирования
+        // Дополнительные действия после успешной отмены бронирования, если нужно
+    })
+    .then(data => {
+    alert(data); // Показать сообщение об успешной отмене бронирования
+    // Перезагрузить страницу
+    location.reload();
     })
     .catch(error => {
-        console.error('Ошибка при отмене бронирования:', error);
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при отмене бронирования');
     });
 }
     function togglePopup(login) {

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="static/lvC.css">
     <link rel="stylesheet" href="https://fonts.google.com/specimen/Jomhuria">
+    <title>Вся история бронирований</title>
 </head>
 <body>
     <div class="header">
@@ -35,52 +36,45 @@
                 </div>
                 <div class="button-container">
                     <button class="btp" onclick="redirectToDetails('{{ book[1] }}')">Подробнее</button>
-                   <button onclick="cancelBooking(login = '{{ login }}', room_name = '{{ history_data[1] }}', date = '{{ history_data[4] }}', time_from = '{{ history_data[5] }}', time_to = '{{ history_data[6] }}')">Отменить бронирование</button>
+                   <button onclick="unbookRoom('{{ login }}', '{{ book[1] }}', '{{ book[4] }}', '{{ book[5] }}', '{{ book[6] }}')">Отменить бронирование</button>
                 </div>
             </div>
         {% endfor %}
         </div>
 <script>
- function redirectToDetails(room_name) {
-        window.location.href = `/get_info?room_name=${room_name}`;
-    }
+function toggleDropdown() {
+    var dropdown = document.getElementById('dropdown');
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+}
 
-    function toggleDropdown() {
-        var dropdown = document.getElementById('dropdown');
-        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-    }
+document.getElementById('pageSelect').addEventListener('change', function() {
+    window.location.href = this.value;
+});
 
-    document.getElementById('pageSelect').addEventListener('change', function() {
-        window.location.href = this.value;
-    });
-   function cancelBooking(login, room_name, date, time_from, time_to) {
-    fetch('/all_history', {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            login: login,
-            room_name: room_name,
-            date: date,
-            time_from: time_from,
-            time_to: time_to
-        })
+function redirectToDetails(room_name) {
+    window.location.href = `/get_info?room_name=${room_name}`;
+}
+
+function unbookRoom(login, room_name, date, time_from, time_to) {
+    fetch(`/user_info?login=${login}&room_name=${room_name}&date=${date}&time_from=${time_from}&time_to=${time_to}`, {
+        method: 'DELETE'
     })
     .then(response => {
-        if (response.ok) {
-            window.location.reload(); // Обновить страницу после успешного удаления бронирования
-        } else {
-            console.error('Ошибка при отмене бронирования:', response.statusText);
-            // Здесь можно добавить логику для обработки ошибки, например, показ сообщения пользователю
+        if (!response.ok) {
+            throw new Error('Ошибка удаления бронирования');
         }
+        return response.text();
+    })
+    .then(data => {
+        alert(data); // Показать сообщение об успешной отмене бронирования
+        // Перезагрузить страницу
+        location.reload();
     })
     .catch(error => {
-        console.error('Ошибка при отмене бронирования:', error);
-        // Здесь можно добавить логику для обработки ошибки, например, показ сообщения пользователю
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при отмене бронирования');
     });
 }
 </script>
-
 </body>
 </html>
