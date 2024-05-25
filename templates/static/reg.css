@@ -2,6 +2,7 @@ body{
     background: url(фон.png);
     background-repeat: no-repeat;
     background-size: cover;
+    user-select: none;
 
 }
 
@@ -97,6 +98,7 @@ form {
     font-weight: bold;
     color: #000000;
     font-family: 'Jomhuria';
+    letter-spacing: .1rem;
 }
 
 .header-text2 {
@@ -104,4 +106,10 @@ form {
     font-weight: bold;
     color: #2C3D95;
     font-family: 'Jomhuria';
+    letter-spacing: .1rem;
+}
+ul{
+    font-size: 0.85rem;
+    margin: 0;
+    padding: 0;
 }
