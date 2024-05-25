@@ -25,6 +25,7 @@
             {% endfor %}
         </select>
     </div>
+    <button class="button" onclick="togglePopup(login = '{{ user_data[2] }}')">Уведомления</button>
 </div>
 
 <div class="container">
@@ -127,7 +128,22 @@
         // Здесь можно добавить логику для обработки ошибки, например, показ сообщения пользователю
     });
 }
+    function togglePopup(login) {
+    fetch(`/notifications?login=${login}`)
+    .then(response => response.json())
+    .then(data => {
+        // Display notifications to the user
+        if (data.length > 0) {
+            alert("Уведомления:\n" + data.join("\n"));
+        } else {
+            alert("У вас нет новых уведомлений.");
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка при получении уведомлений:', error);
+        // Handle error, e.g., show a message to the user
+    });
+}
 </script>
-
 </body>
 </html>

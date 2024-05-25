@@ -1,4 +1,6 @@
 import sqlite3
+from datetime import date
+
 from fastapi import Request, Form
 from fastapi import FastAPI, HTTPException
 from passlib.context import CryptContext
@@ -678,12 +680,11 @@ def access_permission(type_of_operation: str, login: str):
 @app.get("/calendar", response_class=HTMLResponse)
 def show_calendar(request: Request, date: str):
     free_rooms = get_free_gaps_for_rooms(date)
-
     return templates.TemplateResponse("main_page.html", {"request": request})
 
 
 @app.post("/get_info", response_class=HTMLResponse)
-def show_graphics(request: Request, month: str, room_name: str):
+async def show_graphics(request: Request, month: str, room_name: str):
     months = {"January": "01",
               "February": "02",
               "March": "03",
@@ -735,8 +736,6 @@ def show_graphics(request: Request, month: str, room_name: str):
     plt.legend()
     temp_file = "temp_graph.png"
     plt.savefig(temp_file)
-    with open(temp_file, "rb") as image_file:
-        encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
     return templates.TemplateResponse("graphics.html", {"request": request, "graph_image": temp_file})
 
 
@@ -776,7 +775,7 @@ def booking_recommendation(login: str, date: str):
 
 
 @app.get("/notifications")
-def notifications(login: str):
+async def notifications(login: str):
     today = date.today()
     d = str(today).split("-")
     cur_day = d[2]
