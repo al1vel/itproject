@@ -42,25 +42,26 @@
         <h2>Описание</h2>
         <div class="opisanie-room"><p>{{ description }}</p></div>
     </div>
-    <form action="/get_info" method="post">
-        <label for="month">Выберите месяц:</label>
-        <select id="month" name="month">
-            <option value="01">Январь</option>
-            <option value="02">Февраль</option>
-            <option value="03">Март</option>
-            <option value="04">Апрель</option>
-            <option value="05">Май</option>
-            <option value="06">Июнь</option>
-            <option value="07">Июль</option>
-            <option value="08">Август</option>
-            <option value="09">Сентябрь</option>
-            <option value="10">Октябрь</option>
-            <option value="11">Ноябрь</option>
-            <option value="12">Декабрь</option>
-        </select>
-        <input type="hidden" name="room_name" value="{{ room_name }}">
-        <input type="submit" value="Отправить">
-    </form>
+   <form id="graphForm">
+    <label for="month">Выберите месяц:</label>
+    <select input type="month" id="month" name="month">
+        <option value="January">Январь</option>
+        <option value="February">Февраль</option>
+        <option value="March">Март</option>
+        <option value="April">Апрель</option>
+        <option value="May">Май</option>
+        <option value="June">Июнь</option>
+        <option value="July">Июль</option>
+        <option value="August">Август</option>
+        <option value="September">Сентябрь</option>
+        <option value="October">Октябрь</option>
+        <option value="November">Ноябрь</option>
+        <option value="December">Декабрь</option>
+    </select>
+    <input type="hidden" id="roomNameInput" name="room_name" value="{{ room_name }}">
+    <input type="submit" value="Отправить" onclick="updateCalendar()">
+</form>
+
      <img src="data:image/png;base64,{{ graph_image }}" alt="График">
 </div>
 <script>
@@ -69,14 +70,30 @@
         dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
     }
     function updateCalendar() {
-        const month = parseInt(document.getElementById('month').value);
-        const year = new Date().getFullYear(); // Можно использовать текущий год или выбирать его динамически
-        window.location.href = `/get_info?room_name={{ room_name }}&month_num=${month}`;
+        const month = document.getElementById('month').value;
+        const roomName = document.getElementById('roomNameInput').value;
+        const data = { month: month, room_name: roomName };
+
+        fetch('/get_info?month=' + month + '&room_name=' + roomName, {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: '', // Пустое тело запроса, так как параметры передаются в URL
+})
+        .then(response => {
+            if (response.ok) {
+                return response.text();
+            }
+            throw new Error('Network response was not ok.');
+        })
+        .then(data => {
+            document.body.innerHTML = data;
+        })
+        .catch(error => {
+            console.error('There has been a problem with your fetch operation:', error);
+        });
     }
-        }
-    document.getElementById('pageSelect').addEventListener('change', function() {
-        window.location.href = this.value;
-    });
 </script>
 </body>
 </html>
