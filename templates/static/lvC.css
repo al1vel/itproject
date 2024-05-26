@@ -1,7 +1,4 @@
 body {
-    background: url(фон4.png);
-    background-repeat: no-repeat;
-    background-size: cover;
     user-select: none;
 }
 .header {
@@ -78,13 +75,12 @@ button:hover {
     justify-content: flex-end;
 }
 .booking-container {
-    background-color: rgba(204, 204, 204, 0.75);
-    width: 100%;
-    padding: 1.5rem;
-    position: fixed; top: 30%; left: 50%;
-    -webkit-transform: translate(-30%, -50%);
-    -ms-transform: translate(-30%, -50%);
-    transform: translate(-50%, -50%);
+        width: 94%;
+        height: 200%;
+        background-color: rgba(204, 204, 204, 0.75);
+        padding: 3%;
+        margin-top: 7%;
+        position: center;
 }
 .room-info {
     width: 96%;
@@ -114,4 +110,8 @@ button:hover {
      margin: 1rem;
      padding: 0.5rem;
      display: flex;
+}
+.vertical-stack {
+    display: flex;
+    flex-direction: column;
 }
