@@ -15,12 +15,13 @@
         <span></span>
     </button>
     <div id="dropdown" class="dropdown" style="display: none;">
-        <select id="pageSelect">
+        <select id="pageSelect" onchange="location = this.value;">
             <option value="/user_info?login={{ login }}">Личный кабинет</option>
             <option value="/">Выход</option>
-            {% for room in rooms %}
-            <option value="/get_info?room_name={{ room.room_name }}">{{ room.room_name }}</option>
+            {% for room in room_data %}
+            <option value="/get_info?room_name={{ room[0] }}">{{ room[0] }}</option>
             {% endfor %}
+            <option value="/all_history?login={{ login }}">Все бронирования</option>
         </select>
     </div>
 </div>

@@ -51,7 +51,6 @@
         </div>
     </div>
 </div>
-
         <div class="filter-column">
             <div class="capacity-options">
                 <label for="capacity">Вместимость:</label>
@@ -71,61 +70,25 @@
 </div>
    <div class="main-content">
     <main_text_f>Календарь</main_text_f>
-    <div class="calendar-controls">
-        <div class="control-column">
-            <button onclick="toggleCalendar()">Открыть календарь</button>
-        </div>
-        <div class="control-column_mon">
-            <label for="month">Месяц:</label>
-            <select id="month" onchange="updateCalendar()">
-                <option value="01">Январь</option>
-                <option value="02">Февраль</option>
-                <option value="03">Март</option>
-                <option value="04">Апрель</option>
-                <option value="05">Май</option>
-                <option value="06">Июнь</option>
-                <option value="07">Июль</option>
-                <option value="08">Август</option>
-                <option value="09">Сентябрь</option>
-                <option value="10">Октябрь</option>
-                <option value="11">Ноябрь</option>
-                <option value="12">Декабрь</option>
-            </select>
-        </div>
-        <div class="control-column_year">
-            <label for="year">Год:</label>
-            <input type="number" id="year" onchange="updateCalendar()">
-        </div>
-    </div>
-    <table id="calendar">
-        <thead>
-        <tr>
-            <th>Пн</th>
-            <th>Вт</th>
-            <th>Ср</th>
-            <th>Чт</th>
-            <th>Пт</th>
-            <th>Сб</th>
-            <th>Вс</th>
-        </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-   </div>
+       <input type="date"></div>
+    <input type="hidden" id="selectedDate" value="">
 <div class="search-container">
     <input type="text" id="roomNameInput" placeholder="Введите название комнаты">
     <button onclick="searchRooms()">Поиск</button>
-</div>
-</div>
+</div></div>
 <div class="found-rooms-container">
     <h2 class="found-rooms-title">Рекомендации</h2>
-        <div class="room-info_main">
-                <div class="name_room_main">
-                <p>Название комнаты</p>
-                </div>
-                    <div class="booking-details_main">
-                        <p>Время: 13:00-14:00</p>
-                    </div>
+    {% for room, times in recommended_rooms.items() %}
+    <div class="room-info_main">
+        <div class="name_room_main">
+            <p>{{ room }}</p> <!-- Выводим название комнаты -->
+        </div>
+        <div class="booking-details_main">
+            <!-- Выводим время для данной комнаты -->
+            {% for time in times %}
+            <p>Время: {{ time }}</p>
+            {% endfor %}
+        </div>
     <div class="time-input-container">
         <div class="time-column">
             <label for="time_from">Время начала:</label>
@@ -135,12 +98,15 @@
             <label for="time_to">Время окончания:</label>
             <input type="text" id="time_to" placeholder="Конечное время" required><br>
         </div>
-                        <div class="button-container">
-                            <div class="button-container_br"><button onclick="bookRoom()">Забронировать</button>
+        <div class="time-column">
+        <label for="number_of_participants">Количество участников:</label>
+        <input type="number" id="number_of_participants" placeholder="Введите количество участников" required></div>
+        <div class="button-container">
+                            <button id="bookButton" onclick="bookRoom('{{ login }}', '{{ room }}', time_from, time_to, number_of_participants )">Забронировать</button>
                             <button onclick="redirectToDetails()">Подробнее</button></div>
                          </div>
-            </div>
-</div></div>
+</div>{% endfor %}
+</div>
     <div class="found-rooms-container">
     <h2 class="found-rooms-title">Найденные комнаты</h2>
         <div class="room-info_main">
@@ -160,82 +126,17 @@
             <input type="text" id="time_t" placeholder="Конечное время" required><br>
         </div>
                         <div class="button-container">
-                            <div class="button-container_br"><button onclick="bookRoom()">Забронировать</button>
+                            <div class="button-container_br"><button id="bookButto" onclick="bookRoom()">Забронировать</button>
                             <button onclick="redirectToDetails()">Подробнее</button></div>
                          </div>
             </div>
 </div></div>
-    <script>
+ <script>
         function toggleDropdown() {
         var dropdown = document.getElementById('dropdown');
         dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
     }
-
-    document.getElementById('pageSelect').addEventListener('change', function() {
-        window.location.href = this.value;
-    });
-    function toggleCalendar() {
-        const calendar = document.getElementById('calendar');
-        if (calendar.style.display === 'none' || calendar.style.display === '') {
-            calendar.style.display = 'table'; // изменяем на 'table'
-        } else {
-            calendar.style.display = 'none';
-        }
-    }
-       function createCalendar(year, month) {
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDay = firstDay.getDay();
-
-    const tableBody = document.querySelector('#calendar tbody');
-    tableBody.innerHTML = '';
-
-    let date = 1;
-
-    for (let i = 0; i < 6; i++) {
-        const row = document.createElement('tr');
-
-        for (let j = 0; j < 7; j++) {
-            if (i === 0 && j < startingDay) {
-                const cell = document.createElement('td');
-                row.appendChild(cell);
-            } else if (date > daysInMonth) {
-                break;
-            } else {
-                const cell = document.createElement('td');
-                cell.textContent = date;
-
-                // Устанавливаем атрибут data-date с датой
-                cell.setAttribute('data-date', `${year}-${month + 1}-${date}`);
-
-                cell.addEventListener('click', () => {
-                    // Получаем выбранную дату из атрибута data-date
-                    const selectedDate = cell.getAttribute('data-date');
-                    // Используем выбранную дату, например, для поиска
-                    // alert(`Выбрана дата: ${selectedDate}`);
-                    document.getElementById('selectedDate').value = selectedDate;
-                });
-                row.appendChild(cell);
-                date++;
-            }
-        }
-
-        tableBody.appendChild(row);
-    }
-}
-        function updateCalendar() {
-            const month = parseInt(document.getElementById('month').value);
-            const year = parseInt(document.getElementById('year').value);
-            createCalendar(year, month);
-        }
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth();
-        document.getElementById('year').value = currentYear;
-        document.getElementById('month').value = currentMonth;
-        createCalendar(currentYear, currentMonth);
-        function toggleFilters() {
+function toggleFilters() {
     var equipmentOptions = document.querySelector('.equipment-options');
     var capacityOptions = document.querySelector('.capacity-options');
     var locOptions = document.querySelector('.loc-options');
@@ -248,7 +149,7 @@
         capacityOptions.style.display = 'none';
         locOptions.style.display = 'none';
     }
-});
+}
 
 function searchRooms() {
         const roomName = document.getElementById('roomNameInput').value;
@@ -262,6 +163,64 @@ function searchRooms() {
             })
             .catch(error => console.error('Ошибка:', error));
     }
+
+function bookRoom(login, room, time_from, time_to, number_of_participants) {
+        const date = document.getElementById('selectedDate').value;
+        // Выполните POST-запрос к серверу
+         fetch('/main_page', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            login: login,
+            room_name: room,
+            date: date,
+            time_from: time_from,
+            time_to: time_to,
+            number_of_participants: number_of_participants
+        }),
+    })
+    .then(response => response.text())
+    .then(data => {
+        // Обработайте ответ от сервера
+        console.log(data);
+        // Перезагрузите страницу или выполните другие действия
+    })
+    .catch((error) => {
+        console.error('Ошибка:', error);
+    });
+}
+function applyFilters() {
+    // Собираем значения фильтров
+    const capacity = document.getElementById('capacity').value;
+    const location = document.getElementById('location').value;
+    const eq_proj = document.getElementById('eq_proj').checked ? 'YES' : 'NO';
+    const eq_board = document.getElementById('eq_board').checked ? 'YES' : 'NO';
+
+    // Формируем объект с данными фильтров
+    const filtersData = {
+        capacity: capacity,
+        location: location,
+        eq_proj: eq_proj,
+        eq_board: eq_board
+    };
+
+    // Выполняем AJAX-запрос
+    fetch('/filters', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(filtersData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Обработка ответа от сервера
+        console.log(data); // Ваша логика обновления интерфейса с учетом результатов фильтрации
+    })
+    .catch(error => console.error('Ошибка:', error));
+}
 
     </script>
     </body>
