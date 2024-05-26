@@ -79,6 +79,7 @@ button:hover {
 
 .header-text1 {
         font-size: 45px;
+        margin-right:10%;
         font-weight: bold;
         color: #000000;
         font-family: 'Jomhuria';
@@ -452,6 +453,7 @@ button:hover {
             right: 20px; /* отступ от правого края */
             background-color: #f9f9f9;
             padding: 10px;
+            margin-right: 5%;
             border: 1px solid #ccc;
             border-radius: 5px;
             z-index: 1000;
@@ -578,5 +580,9 @@ main_text_f{
     width: 50%;
 }
 .button-container button {
-    margin-right: 3%;
+    margin-right: 8%;
+}
+.button-container {
+    text-align: center;
+    margin-right: 5%;
 }

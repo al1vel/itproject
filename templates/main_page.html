@@ -34,7 +34,7 @@
             <button onclick="toggleFilters()">Показать фильтры</button>
         </div>
         <p><div class="filter-column">
-            <button onclick="applyFilters()">Применить</button>
+            <button onclick="applyFilters()">Применить фильтры</button>
         </div>
     </div>
     <div class="filter-options">
@@ -55,16 +55,16 @@
         <div class="filter-column">
             <div class="capacity-options">
                 <label for="capacity">Вместимость:</label>
-                <input type="number" id="capacity" placeholder="Введите количество участников" required><br>
-            </div>
-        </div>
+        <input type="number" id="capacity" placeholder="Введите количество участников"><br>
+        </div> </div>
         <div class="filter-column">
             <div class="loc-options">
-                <label for="loc">Локации:</label>
-                <select id="loc">
-                    <option value="Пункт А">Пункт А</option>
-                    <option value="Пункт В">Пункт В</option>
-                </select>
+                <label for="location">Локации:</label>
+                <select id="location">
+                {% for location in location_options %}
+                <option value="{{ location }}">{{ location }}</option>
+                {% endfor %}
+            </select>
             </div>
         </div>
     </div>
@@ -115,6 +115,30 @@
  <div class="search-container">
     <input type="text" id="roomNameInput" placeholder="Введите название комнаты">
     <button onclick="searchRooms()">Поиск</button>
+</div></div>
+<div class="found-rooms-container">
+    <h2 class="found-rooms-title">Рекомендации</h2>
+        <div class="room-info_main">
+                <div class="name_room_main">
+                <p>Название комнаты</p>
+                </div>
+                    <div class="booking-details_main">
+                        <p>Время: 13:00-14:00</p>
+                    </div>
+    <div class="time-input-container">
+        <div class="time-column">
+            <label for="time_from">Время начала:</label>
+            <input type="text" id="time_from" placeholder="Начальное время" required><br>
+        </div>
+        <div class="time-column">
+            <label for="time_to">Время окончания:</label>
+            <input type="text" id="time_to" placeholder="Конечное время" required><br>
+        </div>
+                        <div class="button-container">
+                            <div class="button-container_br"><button onclick="bookRoom()">Забронировать</button>
+                            <button onclick="redirectToDetails()">Подробнее</button></div>
+                         </div>
+            </div>
 </div></div>
     <div class="found-rooms-container">
     <h2 class="found-rooms-title">Найденные комнаты</h2>
@@ -217,6 +241,19 @@
         locOptions.style.display = 'none';
     }
 });
+        function applyFilters() {
+            const capacity = document.getElementById('capacity').value;
+            const location = document.getElementById('location').value;
+
+            // Отправить запрос на сервер с использованием fetch или других методов JavaScript
+            fetch(`/filters?capacity=${capacity}&location=${location}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Обработка ответа от сервера
+                    console.log(data); // Для демонстрации, вы можете изменить это на обновление вашей страницы
+                })
+                .catch(error => console.error('Ошибка:', error));
+        }
 
     </script>
     </body>
