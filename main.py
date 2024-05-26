@@ -309,7 +309,7 @@ def get_info(request: Request, room_name: str):
     return templates.TemplateResponse("room.html", {"request": request, **room_data})
 
 
-@app.get("/main_page")
+@app.get("/search")
 def search_rooms(request: str, date: str):
     """
     Функция для поиска комнат.
@@ -819,8 +819,8 @@ async def show_graphics(request: Request, month: str, room_name: str):
 
 
 # Пока не работает
-@app.get("/booking_recommendation")
-def booking_recommendation(login: str, date: str):
+@app.get("/main_page")
+async def booking_recommendation(login: str, date: str):
     cursor.execute('SELECT room_name, time_from, time_to FROM History_of_Operations WHERE booker = ?'
                    ' AND type_of_operation = ?', (login, "booking"))
     info = cursor.fetchall()
