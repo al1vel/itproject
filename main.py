@@ -12,8 +12,6 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from datetime import date
-from fastapi.responses import JSONResponse
-import aiosqlite
 
 initialize_database()
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
