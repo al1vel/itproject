@@ -14,67 +14,69 @@
         <span></span>
         <span></span>
         </button>
-    <div id="dropdown" class="dropdown" style="display: none;">
-        <select id="pageSelect" onchange="location = this.value;">
-                <option value="/user_info?login={{ login }}">Личный кабинет</option>
-                <option value="/">Выход</option>
-                {% for room in room_data %}
-                <option value="/get_info?room_name={{ room[0] }}">{{ room[0] }}</option>
+            <div id="dropdown" class="dropdown" style="display: none;">
+                <select id="pageSelect" onchange="location = this.value;">
+                        <option value="/user_info?login={{ login }}">Личный кабинет</option>
+                        <option value="/">Выход</option>
+                        {% for room in room_data %}
+                        <option value="/get_info?room_name={{ room[0] }}">{{ room[0] }}</option>
+                        {% endfor %}
+                </select>
+            </div></div>
+        <div class="vertical-stack">
+            <div class="booking-container">
+                <div class="active-bookings">Все активные бронирования</div>
+                {% for book in history_data %}
+                    <div class="room-info">
+                        <div class="name_room">
+                            <p>{{ book[1] }}</p>
+                        </div>
+                        <div class="booking-details">
+                            <p>Дата: {{ book[4] }}</p>
+                            <p>Время: {{ book[5] }} - {{ book[6] }}</p>
+                        </div>
+                        <div class="button-container">
+                            <button class="btp" onclick="redirectToDetails('{{ book[1] }}')">Подробнее</button>
+                           <button onclick="unbookRoom('{{ login }}', '{{ book[1] }}', '{{ book[4] }}', '{{ book[5] }}', '{{ book[6] }}')">Отменить бронирование</button>
+                        </div>
+                    </div>
                 {% endfor %}
-        </select>
-    </div></div>
-    <div class="booking-container">
-        <div class="active-bookings">Все активные бронирования</div>
-        {% for book in history_data %}
-            <div class="room-info">
-                <div class="name_room">
-                    <p>{{ book[1] }}</p>
                 </div>
-                <div class="booking-details">
-                    <p>Дата: {{ book[4] }}</p>
-                    <p>Время: {{ book[5] }} - {{ book[6] }}</p>
-                </div>
-                <div class="button-container">
-                    <button class="btp" onclick="redirectToDetails('{{ book[1] }}')">Подробнее</button>
-                   <button onclick="unbookRoom('{{ login }}', '{{ book[1] }}', '{{ book[4] }}', '{{ book[5] }}', '{{ book[6] }}')">Отменить бронирование</button>
-                </div>
-            </div>
-        {% endfor %}
         </div>
 <script>
-function toggleDropdown() {
-    var dropdown = document.getElementById('dropdown');
-    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-}
+    function toggleDropdown() {
+        var dropdown = document.getElementById('dropdown');
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
 
-document.getElementById('pageSelect').addEventListener('change', function() {
-    window.location.href = this.value;
-});
-
-function redirectToDetails(room_name) {
-    window.location.href = `/get_info?room_name=${room_name}`;
-}
-
-function unbookRoom(login, room_name, date, time_from, time_to) {
-    fetch(`/user_info?login=${login}&room_name=${room_name}&date=${date}&time_from=${time_from}&time_to=${time_to}`, {
-        method: 'DELETE'
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Ошибка удаления бронирования');
-        }
-        return response.text();
-    })
-    .then(data => {
-        alert(data); // Показать сообщение об успешной отмене бронирования
-        // Перезагрузить страницу
-        location.reload();
-    })
-    .catch(error => {
-        console.error('Ошибка:', error);
-        alert('Произошла ошибка при отмене бронирования');
+    document.getElementById('pageSelect').addEventListener('change', function() {
+        window.location.href = this.value;
     });
-}
+
+    function redirectToDetails(room_name) {
+        window.location.href = `/get_info?room_name=${room_name}`;
+    }
+
+    function unbookRoom(login, room_name, date, time_from, time_to) {
+        fetch(`/user_info?login=${login}&room_name=${room_name}&date=${date}&time_from=${time_from}&time_to=${time_to}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка удаления бронирования');
+            }
+            return response.text();
+        })
+        .then(data => {
+            alert(data); // Показать сообщение об успешной отмене бронирования
+            // Перезагрузить страницу
+            location.reload();
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при отмене бронирования');
+        });
+    }
 </script>
 </body>
 </html>

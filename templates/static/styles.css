@@ -58,11 +58,11 @@ button:hover {
     background-color: #0056b3;
 }
 .history-bookings {
-         font-size: 40px;
-         font-weight: bold;
-         color: #333;
-         margin-bottom:20px;
-        }
+     font-size: 20px;
+     font-weight: bold;
+     color: #333;
+     margin-bottom:20px;
+    }
 
 .header {
         width: 100%;
@@ -79,7 +79,6 @@ button:hover {
 
 .header-text1 {
         font-size: 45px;
-        margin-right:10%;
         font-weight: bold;
         color: #000000;
         font-family: 'Jomhuria';
@@ -93,7 +92,7 @@ button:hover {
     }
 .profile-container {
         width: 70%;
-        height: 15%;
+        height: 22%;
         padding: 3%;
         display: flex;
         flex-direction: column;
@@ -150,29 +149,28 @@ button:hover {
         height: 200%;
         background-color: rgba(204, 204, 204, 0.75);
         padding: 5%;
-        margin-top: 25%;
+        margin-top: 15%;
         margin-bottom: 2%;
         margin-left: 18%;
 }
 .room-info {
-        width: 98%;
-        height: 10%;
+        width: 96%;
         background-color: white;
         border-radius: 5px;
         padding: 1%;
-        margin-bottom: 1%;
+        margin: 1rem;
         display: flex;
         justify-content: space-between;
         align-items: stretch;
 }
 .booking-details {
-         width: 18%;
-         height: 50%;
          background-color: #ccc;
          border-radius: 5px;
-         padding: 2%;
+         margin: 1rem;
+         padding: 0.5rem;
          display: flex;
         }
+
 .active-bookings {
          font-size: 20px;
          font-weight: bold;
@@ -181,8 +179,8 @@ button:hover {
         }
 .name_room{
         font-size: 17px;
-        margin-left: 20px;
-        margin-top: 15px;
+        margin-left: 1rem;
+        margin-top: 1rem;
         align-items: flex-start;
 }
 .button-container_br {
@@ -432,14 +430,24 @@ button:hover {
          text-align: center;
         }
 .button {
-            position: fixed;
-            top: 1%; /* отступ от верха */
-            right: 2%; /* отступ от правого края */
-            width: 5%;
-            height: 7%;
-            cursor: pointer;
-            z-index: 999; /* чтобы кнопка была поверх других элементов */
-        }
+    position: fixed;
+    top: 1%; /* отступ от верха */
+    right: 2%; /* отступ от правого края */
+    width: 5%;
+    height: 7%;
+    cursor: pointer;
+    z-index: 999; /* чтобы кнопка была поверх других элементов */
+}
+.button2 {
+    position: fixed;
+    font-size: 1rem;
+    top: 1%; /* отступ от верха */
+    right: 2%; /* отступ от правого края */
+    width: 7%;
+    height: 7%;
+    cursor: pointer;
+    z-index: 999; /* чтобы кнопка была поверх других элементов */
+}
         .button span {
             display: block;
             width: 100%;
