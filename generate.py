@@ -78,11 +78,16 @@ def fill_users_table(cursor, num_users=10):
 
 
 def fill_rooms_information_table(cursor):
-    room_image_choices = ['room1.jpg', 'room2.jpg', 'room3.jpg', 'room4.jpg', 'room5.jpg',
-                          'room6.jpg']
+    room_image_choices = ['room1.jpg', 'room2.jpg', 'room3.jpg', 'room4.jpg', 'room5.jpg', 'room6.jpg']
     random.shuffle(room_image_choices)
+    existing_room_names = set()  # To store existing room names
+
     for _ in range(6):
         room_name = fake.word()
+        while room_name in existing_room_names:  # Check if room name already exists
+            room_name = fake.word()
+        existing_room_names.add(room_name)  # Add room name to the set of existing room names
+
         area = fake.random_number(digits=2)
         capacity = fake.random_number(digits=2)
         eq_proj = random.choice(['YES', 'NO'])
@@ -90,10 +95,25 @@ def fill_rooms_information_table(cursor):
         description = fake.text()
         room_image = room_image_choices.pop()
         location = fake.address()
+
         cursor.execute("INSERT INTO Rooms_Information (room_name, area, capacity, eq_proj, eq_board, description, "
-                       "room_image,"
-                       "location) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (room_name, area, capacity, eq_proj, eq_board,
-                                                                     description, room_image, location))
+                       "room_image, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                       (room_name, area, capacity, eq_proj, eq_board, description, room_image, location))
+
+
+def generate_time_in_range(start_time, end_time):
+    # Generate a time string in the format HH:MM within the specified range
+    hour = random.randint(int(start_time[:2]), int(end_time[:2]))
+    if hour < 10:
+        hour_str = '0' + str(hour)
+    else:
+        hour_str = str(hour)
+    minute = random.randint(0, 59)
+    if minute < 10:
+        minute_str = '0' + str(minute)
+    else:
+        minute_str = str(minute)
+    return hour_str + ':' + minute_str
 
 
 def fill_history_of_operations_table(cursor, num_users=10):
@@ -110,17 +130,11 @@ def fill_history_of_operations_table(cursor, num_users=10):
             booker_name = booker[0]  # Получаем имя пользователя
         date = ((datetime.now() + timedelta(days=random.choice([-1, 1]) * fake.random_number(digits=2))).
                 strftime('%d.%m.%Y'))
-        while True:
-            time_from = fake.time()[0:5]
-            if 8 <= int(time_from[0:2]) <= 17:
-                break
-        while True:
-            time_to = fake.time()[0:5]
-            if 19 > int(time_to[0:2]) > int(time_from[0:2]):
-                break
-            elif int(time_to[0:2] == time_from[0:2]):
-                if int(time_to[3:5] > time_from[3:5]):
-                    break
+
+        # Генерация времени только с 9 утра до 18 вечера
+        time_from = generate_time_in_range("09:00", "17:59")
+        time_to = generate_time_in_range(time_from, "17:59")
+
         cursor.execute(
             "INSERT INTO History_of_Operations (room_name, type_of_operation, booker, date, time_from, "
             "time_to) VALUES ("

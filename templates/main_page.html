@@ -112,10 +112,11 @@
         <tbody></tbody>
     </table>
    </div>
- <div class="search-container">
+<div class="search-container">
     <input type="text" id="roomNameInput" placeholder="Введите название комнаты">
     <button onclick="searchRooms()">Поиск</button>
-</div></div>
+</div>
+</div>
 <div class="found-rooms-container">
     <h2 class="found-rooms-title">Рекомендации</h2>
         <div class="room-info_main">
@@ -151,12 +152,12 @@
                     </div>
     <div class="time-input-container">
         <div class="time-column">
-            <label for="time_from">Время начала:</label>
-            <input type="text" id="time_from" placeholder="Начальное время" required><br>
+            <label for="time_fr">Время начала:</label>
+            <input type="text" id="time_fr" placeholder="Начальное время" required><br>
         </div>
         <div class="time-column">
-            <label for="time_to">Время окончания:</label>
-            <input type="text" id="time_to" placeholder="Конечное время" required><br>
+            <label for="time_t">Время окончания:</label>
+            <input type="text" id="time_t" placeholder="Конечное время" required><br>
         </div>
                         <div class="button-container">
                             <div class="button-container_br"><button onclick="bookRoom()">Забронировать</button>
@@ -173,49 +174,56 @@
     document.getElementById('pageSelect').addEventListener('change', function() {
         window.location.href = this.value;
     });
-        function createCalendar(year, month) {
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const daysInMonth = lastDay.getDate();
-            const startingDay = firstDay.getDay();
-
-            const tableBody = document.querySelector('#calendar tbody');
-            tableBody.innerHTML = '';
-
-            let date = 1;
-
-            for (let i = 0; i < 6; i++) {
-                const row = document.createElement('tr');
-
-                for (let j = 0; j < 7; j++) {
-                    if (i === 0 && j < startingDay) {
-                        const cell = document.createElement('td');
-                        row.appendChild(cell);
-                    } else if (date > daysInMonth) {
-                        break;
-                    } else {
-                        const cell = document.createElement('td');
-                        cell.textContent = date;
-                        cell.addEventListener('click', () => {
-                            alert(`Выбрана дата: ${year}-${month + 1}-${date}`);
-                        });
-                        row.appendChild(cell);
-                        date++;
-                    }
-                }
-
-                tableBody.appendChild(row);
-            }
+    function toggleCalendar() {
+        const calendar = document.getElementById('calendar');
+        if (calendar.style.display === 'none' || calendar.style.display === '') {
+            calendar.style.display = 'table'; // изменяем на 'table'
+        } else {
+            calendar.style.display = 'none';
         }
+    }
+       function createCalendar(year, month) {
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDay = firstDay.getDay();
 
-        function toggleCalendar() {
-            const calendar = document.getElementById('calendar');
-            if (calendar.style.display === 'none' || calendar.style.display === '') {
-                calendar.style.display = 'table'; // изменяем на 'table'
+    const tableBody = document.querySelector('#calendar tbody');
+    tableBody.innerHTML = '';
+
+    let date = 1;
+
+    for (let i = 0; i < 6; i++) {
+        const row = document.createElement('tr');
+
+        for (let j = 0; j < 7; j++) {
+            if (i === 0 && j < startingDay) {
+                const cell = document.createElement('td');
+                row.appendChild(cell);
+            } else if (date > daysInMonth) {
+                break;
             } else {
-                calendar.style.display = 'none';
+                const cell = document.createElement('td');
+                cell.textContent = date;
+
+                // Устанавливаем атрибут data-date с датой
+                cell.setAttribute('data-date', `${year}-${month + 1}-${date}`);
+
+                cell.addEventListener('click', () => {
+                    // Получаем выбранную дату из атрибута data-date
+                    const selectedDate = cell.getAttribute('data-date');
+                    // Используем выбранную дату, например, для поиска
+                    // alert(`Выбрана дата: ${selectedDate}`);
+                    document.getElementById('selectedDate').value = selectedDate;
+                });
+                row.appendChild(cell);
+                date++;
             }
         }
+
+        tableBody.appendChild(row);
+    }
+}
         function updateCalendar() {
             const month = parseInt(document.getElementById('month').value);
             const year = parseInt(document.getElementById('year').value);
@@ -241,19 +249,19 @@
         locOptions.style.display = 'none';
     }
 });
-        function applyFilters() {
-            const capacity = document.getElementById('capacity').value;
-            const location = document.getElementById('location').value;
 
-            // Отправить запрос на сервер с использованием fetch или других методов JavaScript
-            fetch(`/filters?capacity=${capacity}&location=${location}`)
-                .then(response => response.json())
-                .then(data => {
-                    // Обработка ответа от сервера
-                    console.log(data); // Для демонстрации, вы можете изменить это на обновление вашей страницы
-                })
-                .catch(error => console.error('Ошибка:', error));
-        }
+function searchRooms() {
+        const roomName = document.getElementById('roomNameInput').value;
+        const selectedDate = document.getElementById('selectedDate').value;
+
+        fetch(`/search?request=${roomName}&date=${selectedDate}`)
+            .then(response => response.json())
+            .then(data => {
+                // Обработка ответа от сервера
+                console.log(data); // Для демонстрации, вы можете изменить это на обновление вашей страницы
+            })
+            .catch(error => console.error('Ошибка:', error));
+    }
 
     </script>
     </body>
