@@ -43,28 +43,27 @@
         <h2>Описание</h2>
         <div class="opisanie-room"><p>{{ description }}</p></div>
     </div>
-    <form id="graphForm" onsubmit="event.preventDefault(); updateCalendar()">
-        <label for="month">Выберите месяц:</label>
-        <select id="month" name="month">
-            <option value="January">Январь</option>
-            <option value="February">Февраль</option>
-            <option value="March">Март</option>
-            <option value="April">Апрель</option>
-            <option value="May">Май</option>
-            <option value="June">Июнь</option>
-            <option value="July">Июль</option>
-            <option value="August">Август</option>
-            <option value="September">Сентябрь</option>
-            <option value="October">Октябрь</option>
-            <option value="November">Ноябрь</option>
-            <option value="December">Декабрь</option>
-        </select>
-        <input type="hidden" id="roomNameInput" name="room_name" value="{{ room_name }}">
-        <input type="submit" value="Отправить">
-    </form>
-    <div id="graphContainer">
-        <img src="" alt="График" id="graphImage">
-    </div>
+   <form id="graphForm">
+    <label for="month">Выберите месяц:</label>
+    <select input type="month" id="month" name="month">
+        <option value="January">Январь</option>
+        <option value="February">Февраль</option>
+        <option value="March">Март</option>
+        <option value="April">Апрель</option>
+        <option value="May">Май</option>
+        <option value="June">Июнь</option>
+        <option value="July">Июль</option>
+        <option value="August">Август</option>
+        <option value="September">Сентябрь</option>
+        <option value="October">Октябрь</option>
+        <option value="November">Ноябрь</option>
+        <option value="December">Декабрь</option>
+    </select>
+    <input type="hidden" id="roomNameInput" name="room_name" value="{{ room_name }}">
+    <input type="submit" value="Отправить" onclick="updateCalendar()">
+</form>
+
+     <img src="/static/xd.png" alt="График">
 </div>
 <script>
     function toggleDropdown() {
@@ -74,14 +73,15 @@
     function updateCalendar() {
         const month = document.getElementById('month').value;
         const roomName = document.getElementById('roomNameInput').value;
+        const data = { month: month, room_name: roomName };
 
         fetch('/get_info?month=' + month + '&room_name=' + roomName, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: '', // Пустое тело запроса, так как параметры передаются в URL
-        })
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: '', // Пустое тело запроса, так как параметры передаются в URL
+})
         .then(response => {
             if (response.ok) {
                 return response.text();
@@ -89,7 +89,7 @@
             throw new Error('Network response was not ok.');
         })
         .then(data => {
-            document.getElementById('graphImage').src = "/static/xd.png"; // Поменяйте путь к изображению на ваш
+            document.body.innerHTML = data;
         })
         .catch(error => {
             console.error('There has been a problem with your fetch operation:', error);
