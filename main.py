@@ -12,6 +12,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from datetime import date
+from datetime import datetime
 
 initialize_database()
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
@@ -65,32 +66,23 @@ async def read_home(request: Request):
     return templates.TemplateResponse("home.html", {"request": request})
 
 
-@app.post("/main_page")
-def book(login: str, room_name: str, date: str, time_from: str, time_to: str, number_of_participants: int):
-    """
-    Функция API для бронирования комнаты.
-
-    Функция создаёт бронь комнаты в базе данных в таблице "История операций".
-
-    Args:
-        login: string
-        room_name:  string
-        date: string in format **.**.****
-        time_from: string in format **:**
-        time_to: string in format **:**
-        number_of_participants: int
-    Returns:
-        nothing
-    """
+@app.post("/book")
+async def book(
+    login: str = Form(...),
+    room_name: str = Form(...),
+    date: str = Form(...),
+    time_from: str = Form(...),
+    time_to: str = Form(...),
+    number_of_participants: int = Form(...),
+):
     try:
         access_permission("booking", login)
         capacity_check(room_name, number_of_participants)
         the_list_of_free_time = get_free_gaps_for_one_room(date, room_name)[room_name]
-        print(the_list_of_free_time)
         time_check(the_list_of_free_time, time_from, time_to)
     except NotEnoughRights:
-        print("This User doesn`t have enough rights")
-        return "This User doesn`t have enough rights"
+        print("This User doesn't have enough rights")
+        return "This User doesn't have enough rights"
     except TooManyParticipants:
         print("Too many participants")
         return "Too many participants"
@@ -100,8 +92,10 @@ def book(login: str, room_name: str, date: str, time_from: str, time_to: str, nu
     except ThereIsNoNecessaryEquipment:
         print("There is no necessary equipment")
         return "There is no necessary equipment"
-    cursor.execute(f'INSERT INTO History_of_Operations (room_name, type_of_operation, booker, date, time_from, time_to)'
-                   f' VALUES ("{room_name}", "booking", "{login}", "{date}", "{time_from}", "{time_to}")')
+    cursor.execute(
+        f'INSERT INTO History_of_Operations (room_name, type_of_operation, booker, date, time_from, time_to)'
+        f' VALUES ("{room_name}", "booking", "{login}", "{date}", "{time_from}", "{time_to}")'
+    )
     return "The room has been successfully booked"
 
 
@@ -307,8 +301,8 @@ def get_info(request: Request, room_name: str):
     return templates.TemplateResponse("room.html", {"request": request, **room_data})
 
 
-@app.get("/search")
-def search_rooms(request: str, date: str):
+@app.post("/search")
+async def search_rooms(request: str, date: str):
     """
     Функция для поиска комнат.
 
@@ -466,7 +460,6 @@ async def filter_rooms(capacity=0, location=None, eq_proj=None, eq_board=None):
     else:
         cursor.execute(f'SELECT room_name FROM Rooms_Information')
         eq_board_names = cursor.fetchall()
-
     all_room_names = conjunction_of_list(capacity_names, location_names, eq_proj_names, eq_board_names)
     if len(all_room_names) > 0:
         all_rn = all_room_names[0]
@@ -526,7 +519,7 @@ def add_room(room_name: str, login: str, area: float, capacity: int, inf: str, i
         eq_board: "YES" or "NO" if board exists or not
         login: string
 
-    Returns:
+    Returns:ф
         nothing
     """
     try:
@@ -819,7 +812,7 @@ async def show_graphics(request: Request, month: str, room_name: str):
 
 
 @app.get("/main_page", response_class=HTMLResponse)
-async def booking_recommendation(request: Request, login: str, date: str):
+async def booking_recommendation(request: Request, login: str, date: str = None):
     """
     Функция для рекомендации комнат по предыдущим бронированиям.
 
@@ -835,6 +828,8 @@ async def booking_recommendation(request: Request, login: str, date: str):
     Returns:
         dict, keys = room names, values = array of strings ["**:** - **:**, ...]
     """
+    if date is None:
+        date = datetime.now().strftime("%d.%m.%Y")
     cursor.execute('SELECT room_name, time_from, time_to FROM History_of_Operations WHERE booker = ?'
                    ' AND type_of_operation = ?', (login, "booking"))
     info = cursor.fetchall()
@@ -866,11 +861,13 @@ async def booking_recommendation(request: Request, login: str, date: str):
         cursor.execute('SELECT DISTINCT location FROM Rooms_Information')
         locations = cursor.fetchall()
         location_options = [loc[0] for loc in locations]
+        cursor.execute("SELECT room_name FROM Rooms_Information")
+        room_data = cursor.fetchall()
     return templates.TemplateResponse("main_page.html",
                                       {"request": request, "login": login, "recommended_rooms": recommended_rooms,
-                                       "location_options": location_options})
+                                       "location_options": location_options, "room_data": room_data})
 
-
+  
 @app.get("/notifications")
 async def notifications(login: str):
     today = date.today()
