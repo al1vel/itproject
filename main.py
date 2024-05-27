@@ -789,9 +789,9 @@ async def show_graphics(request: Request, month: str, room_name: str):
     for day in range(1, len(x) + 1):
         s = str(day)
         if len(s) == 1:
-            cur_day = f'0{s}.{cur_mon}'
+            cur_day = f'0{s}.{cur_mon}.2024'
         elif len(s) == 2:
-            cur_day = f'{s}.{cur_mon}'
+            cur_day = f'{s}.{cur_mon}.2024'
         else:
             print("TROUBLE")
 
@@ -806,20 +806,16 @@ async def show_graphics(request: Request, month: str, room_name: str):
         book_time = 540 - free_time
         percent = round((book_time / 540) * 100)
         y.append(percent)
-
     # Создаем график
     plt.bar(x, y, label='Занятость')
     plt.xlabel('День')
     plt.ylabel('Занятость')
     plt.title('Занятость комнаты на протяжении месяца')
     plt.legend()
-    # Преобразуем график в изображение в формате PNG и затем в base64
-    buffer = io.BytesIO()
-    plt.savefig(buffer, format='png')
-    buffer.seek(0)
-    graph_image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+    plt.savefig("templates/static/xd.png")
     plt.close()
-    return templates.TemplateResponse("room.html", {"request": request, "graph_image": graph_image_base64})
+    return templates.TemplateResponse("room.html", {"request": request, "graph_image": "xd.png"})
 
 
 @app.get("/main_page", response_class=HTMLResponse)
