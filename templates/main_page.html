@@ -9,219 +9,296 @@
 </head>
 <body style="background-image: url('static/фон5.png'); background-attachment: fixed;">
     <div class="header">
-            <p><span class="header-text1">OFFICE </span><span class="header-text2">FIX</span></p>
-            <button class="button" onclick="toggleDropdown()">
-    <span></span>
-    <span></span>
-    <span></span>
-    </button>
-
-<div id="dropdown" class="dropdown" style="display: none;">
-     <select id="pageSelect">
-            <option value="/user_info?login={{ login }}">Личный кабинет</option>
-            <option value="/">Выход</option>
-            {% for room in rooms %}
-            <option value="/get_info?room_name={{ room.room_name }}">{{ room.room_name }}</option>
-            {% endfor %}
-     </select>
-</div></div>
-<h1 class="title_main">Переговорные комнаты</h1>
-<div class="filters-calendar-container">
-   <div class="sidebar">
-    <main_text_f>Фильтры</main_text_f>
-    <div class="filter-controls">
-        <p><div class="filter-column">
-            <button onclick="toggleFilters()">Показать фильтры</button>
-        </div>
-        <p><div class="filter-column">
-            <button onclick="applyFilters()">Применить фильтры</button>
-        </div>
-    </div>
-    <div class="filter-options">
-        <div class="filter-column">
-    <div class="equipment-options">
-        <label>Оборудование:</label>
-        <div>
-            <input type="checkbox" id="eq_proj" name="eq_proj" value="Проектор">
-            <label for="eq_proj">Проектор</label>
-        </div>
-        <div>
-            <input type="checkbox" id="eq_board" name="eq_board" value="Доска">
-            <label for="eq_board">Доска</label>
-        </div>
-    </div>
-</div>
-        <div class="filter-column">
-            <div class="capacity-options">
-                <label for="capacity">Вместимость:</label>
-        <input type="number" id="capacity" placeholder="Введите количество участников"><br>
-        </div> </div>
-        <div class="filter-column">
-            <div class="loc-options">
-                <label for="location">Локации:</label>
-                <select id="location">
-                {% for location in location_options %}
-                <option value="{{ location }}">{{ location }}</option>
+        <p><span class="header-text1">OFFICE </span><span class="header-text2">FIX</span></p>
+        <button class="button" onclick="toggleDropdown()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <div id="dropdown" class="dropdown" style="display: none;">
+            <select id="pageSelect">
+                <option value="/user_info?login={{ login }}">Личный кабинет</option>
+                <option value="/">Выход</option>
+                {% for room in room_data %}
+                <option value="/get_info?room_name={{ room[0] }}">{{ room[0] }}</option>
                 {% endfor %}
             </select>
+        </div>
+    </div>
+    <h1 class="title_main">Переговорные комнаты</h1>
+    <div class="filters-calendar-container">
+        <div class="sidebar">
+            <main_text_f>Фильтры</main_text_f>
+            <div class="filter-controls">
+                <div class="filter-column">
+                    <button onclick="toggleFilters()">Показать фильтры</button>
+                </div>
+                <div class="filter-column">
+                    <button onclick="applyFilters()">Применить фильтры</button>
+                </div>
+            </div>
+            <div class="filter-options">
+                <div class="filter-column">
+                    <div class="equipment-options">
+                        <label>Оборудование:</label>
+                        <div>
+                            <input type="checkbox" id="eq_proj" name="eq_proj" value="Проектор">
+                            <label for="eq_proj">Проектор</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="eq_board" name="eq_board" value="Доска">
+                            <label for="eq_board">Доска</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-column">
+                    <div class="capacity-options">
+                        <label for="capacity">Вместимость:</label>
+                        <input type="number" id="capacity" placeholder="Введите количество участников"><br>
+                    </div>
+                </div>
+                <div class="filter-column">
+                    <div class="loc-options">
+                        <label for="location">Локации:</label>
+                        <select id="location">
+                            {% for location in location_options %}
+                            <option value="{{ location }}">{{ location }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="main-content">
+            <main_text_f>Календарь</main_text_f>
+            <input type="date" id="calendarInput"></div>
+            <input type="hidden" id="selectedDate" value="">
+            <div class="search-container">
+                <input type="text" id="roomNameInput" placeholder="Введите название комнаты">
+                <button onclick="searchRooms()">Поиск</button>
+            </div>
+        </div>
+    <h2 class="found-rooms-title">Рекомендации</h2>
+    {% for room, times in recommended_rooms.items() %}
+<form action="/book" method="post">
+    <div class="found-rooms-container">
+        <div class="room-info_main">
+            <div class="name_room_main">
+                <p>{{ room }}</p> <!-- Выводим название комнаты -->
+            </div>
+            <div class="booking-details_main">
+                <!-- Выводим время для данной комнаты -->
+                {% for time in times %}
+                <p>Время: {{ time }}</p>
+                {% endfor %}
+            </div>
+            <div class="time-input-container">
+                <div class="time-column">
+                    <label for="time_from">Время начала:</label>
+                    <input type="text" id="time_from" name="time_from" placeholder="Начальное время" required><br>
+                </div>
+                <div class="time-column">
+                    <label for="time_to">Время окончания:</label>
+                    <input type="text" id="time_to" name="time_to" placeholder="Конечное время" required><br>
+                </div>
+                <div class="time-column">
+                    <label for="number_of_participants">Количество участников:</label>
+                    <input type="number" id="number_of_participants" name="number_of_participants" placeholder="Введите количество участников" required>
+                </div>
+                <div class="time-column">
+                    <label for="date">Дата:</label>
+                    <input type="date" id="date" name="date" required>
+                </div>
+                <div class="time-column">
+                <div class="button-container">
+                    <input type="hidden" name="login" value="{{ login }}"> <!-- Передаем значение login -->
+                    <input type="hidden" name="room_name" value="{{ room }}">
+                    <input type="submit" value="Забронировать">
+                    <button onclick="redirectToDetails()">Подробнее</button>
+               </div>
             </div>
         </div>
     </div>
 </div>
-   <div class="main-content">
-    <main_text_f>Календарь</main_text_f>
-       <input type="date"></div>
-    <input type="hidden" id="selectedDate" value="">
-<div class="search-container">
-    <input type="text" id="roomNameInput" placeholder="Введите название комнаты">
-    <button onclick="searchRooms()">Поиск</button>
-</div></div>
-<div class="found-rooms-container">
-    <h2 class="found-rooms-title">Рекомендации</h2>
-    {% for room, times in recommended_rooms.items() %}
-    <div class="room-info_main">
-        <div class="name_room_main">
-            <p>{{ room }}</p> <!-- Выводим название комнаты -->
-        </div>
-        <div class="booking-details_main">
-            <!-- Выводим время для данной комнаты -->
-            {% for time in times %}
-            <p>Время: {{ time }}</p>
-            {% endfor %}
-        </div>
-    <div class="time-input-container">
-        <div class="time-column">
-            <label for="time_from">Время начала:</label>
-            <input type="text" id="time_from" placeholder="Начальное время" required><br>
-        </div>
-        <div class="time-column">
-            <label for="time_to">Время окончания:</label>
-            <input type="text" id="time_to" placeholder="Конечное время" required><br>
-        </div>
-        <div class="time-column">
-        <label for="number_of_participants">Количество участников:</label>
-        <input type="number" id="number_of_participants" placeholder="Введите количество участников" required></div>
-        <div class="button-container">
-                            <button id="bookButton" onclick="bookRoom('{{ login }}', '{{ room }}', time_from, time_to, number_of_participants )">Забронировать</button>
-                            <button onclick="redirectToDetails()">Подробнее</button></div>
-                         </div>
-</div>{% endfor %}
-</div>
-    <div class="found-rooms-container">
+</form>{% endfor %}
     <h2 class="found-rooms-title">Найденные комнаты</h2>
-        <div class="room-info_main">
-                <div class="name_room_main">
-                <p>Название комнаты</p>
-                </div>
-                    <div class="booking-details_main">
-                        <p>Время: 13:00-14:00</p>
-                    </div>
-    <div class="time-input-container">
-        <div class="time-column">
-            <label for="time_fr">Время начала:</label>
-            <input type="text" id="time_fr" placeholder="Начальное время" required><br>
-        </div>
-        <div class="time-column">
-            <label for="time_t">Время окончания:</label>
-            <input type="text" id="time_t" placeholder="Конечное время" required><br>
-        </div>
-                        <div class="button-container">
-                            <div class="button-container_br"><button id="bookButto" onclick="bookRoom()">Забронировать</button>
-                            <button onclick="redirectToDetails()">Подробнее</button></div>
-                         </div>
-            </div>
-</div></div>
- <script>
-        function toggleDropdown() {
-        var dropdown = document.getElementById('dropdown');
-        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-    }
-function toggleFilters() {
-    var equipmentOptions = document.querySelector('.equipment-options');
-    var capacityOptions = document.querySelector('.capacity-options');
-    var locOptions = document.querySelector('.loc-options');
-    if (equipmentOptions.style.display === 'none' || equipmentOptions.style.display === '') {
-        equipmentOptions.style.display = 'block';
-        capacityOptions.style.display = 'block';
-        locOptions.style.display = 'block';
-    } else {
-        equipmentOptions.style.display = 'none';
-        capacityOptions.style.display = 'none';
-        locOptions.style.display = 'none';
-    }
-}
-
-function searchRooms() {
+   <div class="found-rooms-container" id="foundRoomsContainer">
+</div>
+<script>
+    function searchRooms() {
         const roomName = document.getElementById('roomNameInput').value;
         const selectedDate = document.getElementById('selectedDate').value;
-
         fetch(`/search?request=${roomName}&date=${selectedDate}`)
             .then(response => response.json())
             .then(data => {
-                // Обработка ответа от сервера
-                console.log(data); // Для демонстрации, вы можете изменить это на обновление вашей страницы
+                console.log(data); // Обработка ответа от сервера
+                displayRooms(data); // Отображаем найденные комнаты
             })
             .catch(error => console.error('Ошибка:', error));
     }
 
-function bookRoom(login, room, time_from, time_to, number_of_participants) {
-        const date = document.getElementById('selectedDate').value;
-        // Выполните POST-запрос к серверу
-         fetch('/main_page', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            login: login,
-            room_name: room,
-            date: date,
-            time_from: time_from,
-            time_to: time_to,
-            number_of_participants: number_of_participants
-        }),
-    })
-    .then(response => response.text())
-    .then(data => {
-        // Обработайте ответ от сервера
-        console.log(data);
-        // Перезагрузите страницу или выполните другие действия
-    })
-    .catch((error) => {
-        console.error('Ошибка:', error);
+    function displayRooms(data) {
+        const foundRoomsContainer = document.getElementById('foundRoomsContainer');
+        foundRoomsContainer.innerHTML = ''; // Очищаем контейнер
+
+        for (const room in data) {
+            const times = data[room];
+
+            // Создаем элемент для информации о комнате
+            const roomInfo = document.createElement('div');
+            roomInfo.classList.add('room-info_main');
+
+            // Добавляем название комнаты
+            const nameRoom = document.createElement('div');
+            nameRoom.classList.add('name_room_main');
+            nameRoom.innerHTML = `<p>${room}</p>`;
+            roomInfo.appendChild(nameRoom);
+
+            // Добавляем информацию о свободных промежутках времени
+            const bookingDetails = document.createElement('div');
+            bookingDetails.classList.add('booking-details_main');
+            times.forEach(time => {
+                bookingDetails.innerHTML += `<p>Время: ${time}</p>`;
+            });
+            roomInfo.appendChild(bookingDetails);
+
+            // Создаем поля для ввода времени бронирования и кнопку "Забронировать"
+            const timeInputContainer = document.createElement('div');
+            timeInputContainer.classList.add('time-input-container');
+            timeInputContainer.innerHTML = `
+        <div class="time-input-container">
+            <div class="time-column">
+                <label for="time_from_{{ room }}">Время начала:</label>
+                <input type="text" id="time_from_{{ room }}" name="time_from" placeholder="Начальное время" required><br>
+            </div>
+            <div class="time-column">
+                <label for="time_to_{{ room }}">Время окончания:</label>
+                <input type="text" id="time_to_{{ room }}" name="time_to" placeholder="Конечное время" required><br>
+            </div>
+            <div class="time-column">
+                <label for="number_of_participants_{{ room }}">Количество участников:</label>
+                <input type="number" id="number_of_participants_{{ room }}" name="number_of_participants" placeholder="Введите количество участников" required>
+            </div>
+            <div class="time-column">
+                <label for="date_{{ room }}">Дата:</label>
+                <input type="date" id="date_{{ room }}" name="date" required>
+            </div>
+            <div class="time-column">
+                <div class="button-container">
+                    <input type="hidden" name="login" value="{{ login }}">
+                    <input type="hidden" name="room_name" value="{{ room }}">
+                    <input type="submit" value="Забронировать">
+                    <button onclick="redirectToDetails()">Подробнее</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            `;
+            roomInfo.appendChild(timeInputContainer);
+
+            // Добавляем информацию о комнате в контейнер найденных комнат
+            foundRoomsContainer.appendChild(roomInfo);
+        }
+    }
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const dateInput = document.querySelector('input[type="date"]');
+        if (!dateInput.value) {
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+            document.getElementById('selectedDate').value = today;
+        }
+
+        dateInput.addEventListener('change', (event) => {
+            document.getElementById('selectedDate').value = event.target.value;
+            searchRooms(); // При изменении даты вызываем функцию поиска комнат
+        });
+        // Вызываем поиск комнат при загрузке страницы
+        searchRooms();
     });
-}
-function applyFilters() {
-    // Собираем значения фильтров
-    const capacity = document.getElementById('capacity').value;
-    const location = document.getElementById('location').value;
-    const eq_proj = document.getElementById('eq_proj').checked ? 'YES' : 'NO';
-    const eq_board = document.getElementById('eq_board').checked ? 'YES' : 'NO';
 
-    // Формируем объект с данными фильтров
-    const filtersData = {
-        capacity: capacity,
-        location: location,
-        eq_proj: eq_proj,
-        eq_board: eq_board
-    };
+    function toggleDropdown() {
+        var dropdown = document.getElementById('dropdown');
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
 
-    // Выполняем AJAX-запрос
-    fetch('/filters', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(filtersData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Обработка ответа от сервера
-        console.log(data); // Ваша логика обновления интерфейса с учетом результатов фильтрации
-    })
-    .catch(error => console.error('Ошибка:', error));
-}
+    function toggleFilters() {
+        var equipmentOptions = document.querySelector('.equipment-options');
+        var capacityOptions = document.querySelector('.capacity-options');
+        var locOptions = document.querySelector('.loc-options');
+        if (equipmentOptions.style.display === 'none' || equipmentOptions.style.display === '') {
+            equipmentOptions.style.display = 'block';
+            capacityOptions.style.display = 'block';
+            locOptions.style.display = 'block';
+        } else {
+            equipmentOptions.style.display = 'none';
+            capacityOptions.style.display = 'none';
+            locOptions.style.display = 'none';
+        }
+    }
 
-    </script>
-    </body>
+    function searchRooms() {
+        const roomName = document.getElementById('roomNameInput').value;
+        const selectedDate = document.getElementById('selectedDate').value;
+        fetch(`/search?request=${roomName}&date=${selectedDate}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                request: roomName,
+                date: selectedDate
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data); // Обработка ответа от сервера
+            displayRooms(data); // Отображаем найденные комнаты
+        })
+        .catch(error => console.error('Ошибка:', error));
+    }
+
+    function applyFilters() {
+        const capacity = document.getElementById('capacity').value;
+        const location = document.getElementById('location').value;
+        const eq_proj = document.getElementById('eq_proj').checked ? 'YES' : 'NO';
+        const eq_board = document.getElementById('eq_board').checked ? 'YES' : 'NO';
+
+        const filtersData = {
+            capacity: capacity,
+            location: location,
+            eq_proj: eq_proj,
+            eq_board: eq_board
+        };
+
+        fetch('/filters', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(filtersData)
+        })
+        .then(response => response.text())
+        .then(data => {
+            // Вставляем полученный HTML в секцию "Найденные комнаты"
+            document.getElementById('foundRoomsContainer').innerHTML = data;
+        })
+        .catch(error => console.error('Ошибка:', error));
+    }
+    function bookRoom() {
+        // Получаем выбранную дату из скрытого поля
+        const selectedDate = document.getElementById('selectedDate').value;
+
+        // Обновляем скрытые поля с датой перед отправкой формы
+        document.getElementById('selectedDateInput').value = selectedDate;
+
+        // Отправляем форму
+        document.getElementById('bookingForm').submit();
+    }
+
+</script>
+
+</body>
 </html>

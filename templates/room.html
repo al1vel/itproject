@@ -43,9 +43,9 @@
         <h2>Описание</h2>
         <div class="opisanie-room"><p>{{ description }}</p></div>
     </div>
-   <form id="graphForm">
+<form id="graphForm" method="POST" action="/get_info">
     <label for="month">Выберите месяц:</label>
-    <select input type="month" id="month" name="month">
+    <select id="month" name="month">
         <option value="January">Январь</option>
         <option value="February">Февраль</option>
         <option value="March">Март</option>
@@ -62,8 +62,7 @@
     <input type="hidden" id="roomNameInput" name="room_name" value="{{ room_name }}">
     <input type="submit" value="Отправить" onclick="updateCalendar()">
 </form>
-
-     <img src="data:image/png;base64,{{ graph_image }}" alt="График">
+<img src="/static/{{plot_filename}}" alt="График">
 </div>
 <script>
     function toggleDropdown() {
