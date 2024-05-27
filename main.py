@@ -188,7 +188,7 @@ async def unnbook(login: str, room_name: str, date: str, time_from: str, time_to
         booker = cursor.fetchall()
 
         if login == booker[0][0]:
-            access_permission("unnbooking", login)
+            access_permission("unbooking", login)
     except NotEnoughRights:
         print("This User hasn`t enough rights")
         return {"message": "This User hasn`t enough rights"}
@@ -197,6 +197,8 @@ async def unnbook(login: str, room_name: str, date: str, time_from: str, time_to
         DELETE FROM History_of_Operations 
         WHERE room_name = ? AND date = ? AND time_from = ? AND time_to = ?
     ''', (room_name, date, time_from, time_to))
+    cursor.execute(f'INSERT INTO History_of_Operations (room_name, type_of_operation, booker, date, time_from, time_to)'
+                   f' VALUES ("{room_name}", "unbooking", "{login}", "{date}", "{time_from}", "{time_to}")')
 
     return {"message": "Booking successfully cancelled"}
 
@@ -248,7 +250,6 @@ async def unbook(login: str, room_name: str, date: str, time_from: str, time_to:
     return {"message": "Booking successfully cancelled"}
 
 
-
 @app.get("/all_history", response_class=HTMLResponse)
 def all_history(request: Request, login: str):
     """
@@ -273,7 +274,8 @@ def all_history(request: Request, login: str):
     history_data = cursor.fetchall()
     cursor.execute("SELECT room_name FROM Rooms_Information")
     room_data = cursor.fetchall()
-    return templates.TemplateResponse("levelC.html", {"request": request, "history_data": history_data, "room_data": room_data})
+    return templates.TemplateResponse("levelC.html",
+                                      {"request": request, "history_data": history_data, "room_data": room_data})
 
 
 @app.get("/get_info", response_class=HTMLResponse)
@@ -713,18 +715,37 @@ async def get_user_info(request: Request, login: str):
     user_data = cursor.fetchone()
     if user_data is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
-    current_date = datetime.datetime.now().strftime("%d.%m.%Y")
-    date = current_date
+
+    active_bookings = []
+    booking_history = []
+    cur_date = datetime.datetime.now().strftime("%d.%m.%Y")
+    cur_day = cur_date.split(".")[0]
+    cur_mon = cur_date.split(".")[1]
+    cur_year = cur_date.split(".")[2]
     cursor.execute(f'''
         SELECT * FROM History_of_Operations 
-        WHERE booker = ? AND date >= ? AND type_of_operation = ?
-    ''', (login, date, 'booking'))
-    active_bookings = cursor.fetchall()
-    cursor.execute(f'''
-        SELECT * FROM History_of_Operations 
-        WHERE booker = ? AND date < ? AND type_of_operation = ?
-    ''', (login, date, 'booking'))
-    booking_history = cursor.fetchall()
+        WHERE booker = ? AND type_of_operation = ?
+    ''', (login, 'booking'))
+    bookings = cursor.fetchall()
+
+    for booking in bookings:
+        book_date = booking[4]
+        book_day, book_mon, book_year = book_date.split(".")
+        if cur_year > book_year:
+            booking_history.append(booking)
+        elif cur_year == book_year:
+            if cur_mon > book_mon:
+                booking_history.append(booking)
+            elif cur_mon == book_mon:
+                if cur_day > book_day:
+                    booking_history.append(booking)
+                else:
+                    active_bookings.append(booking)
+            else:
+                active_bookings.append(booking)
+        else:
+            active_bookings.append(booking)
+
     cursor.execute("SELECT room_name FROM Rooms_Information")
     room_data = cursor.fetchall()
     return templates.TemplateResponse("lk.html", {"request": request, "user_data": user_data,
@@ -751,15 +772,10 @@ def access_permission(type_of_operation: str, login: str):
     return "Operation is allowed"
 
 
-@app.get("/calendar", response_class=HTMLResponse)
-def show_calendar(request: Request, date: str):
-    free_rooms = get_free_gaps_for_rooms(date)
-    return templates.TemplateResponse("main_page.html", {"request": request})
-
-
 @app.post("/get_info", response_class=HTMLResponse)
 async def show_graphics(request: Request, month: str, room_name: str):
-    months = {"January": "01", "February": "02", "March": "03", "April": "04", "May": "05", "June": "06", "July": "07", "August": "08", "September": "09", "October": "10", "November": "11", "December": "12"}
+    months = {"January": "01", "February": "02", "March": "03", "April": "04", "May": "05", "June": "06", "July": "07",
+              "August": "08", "September": "09", "October": "10", "November": "11", "December": "12"}
     cur_mon = months[month]
 
     if int(cur_mon) == 2:
@@ -773,9 +789,9 @@ async def show_graphics(request: Request, month: str, room_name: str):
     for day in range(1, len(x) + 1):
         s = str(day)
         if len(s) == 1:
-            cur_day = f'0{s}.{cur_mon}'
+            cur_day = f'0{s}.{cur_mon}.2024'
         elif len(s) == 2:
-            cur_day = f'{s}.{cur_mon}'
+            cur_day = f'{s}.{cur_mon}.2024'
         else:
             print("TROUBLE")
 
@@ -790,20 +806,16 @@ async def show_graphics(request: Request, month: str, room_name: str):
         book_time = 540 - free_time
         percent = round((book_time / 540) * 100)
         y.append(percent)
-
     # Создаем график
     plt.bar(x, y, label='Занятость')
     plt.xlabel('День')
     plt.ylabel('Занятость')
     plt.title('Занятость комнаты на протяжении месяца')
     plt.legend()
-    # Преобразуем график в изображение в формате PNG и затем в base64
-    buffer = io.BytesIO()
-    plt.savefig(buffer, format='png')
-    buffer.seek(0)
-    graph_image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+    plt.savefig("templates/static/xd.png")
     plt.close()
-    return templates.TemplateResponse("room.html", {"request": request, "graph_image": graph_image_base64})
+    return templates.TemplateResponse("room.html", {"request": request, "graph_image": "xd.png"})
 
 
 @app.get("/main_page", response_class=HTMLResponse)
@@ -854,7 +866,9 @@ async def booking_recommendation(request: Request, login: str, date: str):
         cursor.execute('SELECT DISTINCT location FROM Rooms_Information')
         locations = cursor.fetchall()
         location_options = [loc[0] for loc in locations]
-    return templates.TemplateResponse("main_page.html", {"request": request, "login": login, "recommended_rooms": recommended_rooms, "location_options": location_options})
+    return templates.TemplateResponse("main_page.html",
+                                      {"request": request, "login": login, "recommended_rooms": recommended_rooms,
+                                       "location_options": location_options})
 
 
 @app.get("/notifications")
