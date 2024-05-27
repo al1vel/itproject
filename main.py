@@ -1,8 +1,8 @@
-import base64
 import datetime
 import sqlite3
-from datetime import date
-
+import matplotlib.pyplot as plt
+import io
+import base64
 from fastapi import Request, Form
 from fastapi import FastAPI, HTTPException
 from passlib.context import CryptContext
@@ -11,10 +11,7 @@ from database import initialize_database
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-import matplotlib.pyplot as plt
 from datetime import date
-from fastapi.responses import JSONResponse
-import aiosqlite
 
 initialize_database()
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
@@ -272,7 +269,7 @@ def all_history(request: Request, login: str):
     except NotEnoughRights:
         print("This User hasn`t enough rights")
         return "This User hasn`t enough rights"
-    cursor.execute("SELECT * FROM History_of_Operations")
+    cursor.execute("SELECT * FROM History_of_Operations WHERE type_of_operation = 'booking'")
     history_data = cursor.fetchall()
     cursor.execute("SELECT room_name FROM Rooms_Information")
     room_data = cursor.fetchall()
@@ -423,8 +420,8 @@ def conjunction_of_list(*lists):
     return list(res)
 
 
-@app.get("/filters")
-def filter_rooms(capacity=0, location=None, eq_proj=None, eq_board=None):
+@app.post("/filters")
+async def filter_rooms(capacity=0, location=None, eq_proj=None, eq_board=None):
     """
     Функция для фильтрации переговорных комнат
     Args:
@@ -473,10 +470,7 @@ def filter_rooms(capacity=0, location=None, eq_proj=None, eq_board=None):
         all_rn = all_room_names[0]
     else:
         all_rn = []
-    cursor.execute('SELECT DISTINCT location FROM Rooms_Information')
-    locations = cursor.fetchall()
-    location_options = [loc[0] for loc in locations]
-    return all_rn, location_options
+    return all_rn
 
 
 @app.get("/free_gaps")
@@ -719,15 +713,17 @@ async def get_user_info(request: Request, login: str):
     user_data = cursor.fetchone()
     if user_data is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
+    current_date = datetime.datetime.now().strftime("%d.%m.%Y")
+    date = current_date
     cursor.execute(f'''
         SELECT * FROM History_of_Operations 
-        WHERE booker = ? AND date >= date('now') AND type_of_operation = ?
-    ''', (login, 'booking'))
+        WHERE booker = ? AND date >= ? AND type_of_operation = ?
+    ''', (login, date, 'booking'))
     active_bookings = cursor.fetchall()
     cursor.execute(f'''
         SELECT * FROM History_of_Operations 
-        WHERE booker = ? AND date < date('now') AND type_of_operation = ?
-    ''', (login, 'booking'))
+        WHERE booker = ? AND date < ? AND type_of_operation = ?
+    ''', (login, date, 'booking'))
     booking_history = cursor.fetchall()
     cursor.execute("SELECT room_name FROM Rooms_Information")
     room_data = cursor.fetchall()
@@ -763,19 +759,7 @@ def show_calendar(request: Request, date: str):
 
 @app.post("/get_info", response_class=HTMLResponse)
 async def show_graphics(request: Request, month: str, room_name: str):
-    months = {"January": "01",
-              "February": "02",
-              "March": "03",
-              "April": "04",
-              "May": "05",
-              "June": "06",
-              "July": "07",
-              "August": "08",
-              "September": "09",
-              "October": "10",
-              "November": "11",
-              "December": "12"
-              }
+    months = {"January": "01", "February": "02", "March": "03", "April": "04", "May": "05", "June": "06", "July": "07", "August": "08", "September": "09", "October": "10", "November": "11", "December": "12"}
     cur_mon = months[month]
 
     if int(cur_mon) == 2:
@@ -802,23 +786,43 @@ async def show_graphics(request: Request, month: str, room_name: str):
             time_to = time.split("-")[1]
             time_from_int = int(time_from.split(":")[0]) * 60 + int(time_from.split(":")[1])
             time_to_int = int(time_to.split(":")[0]) * 60 + int(time_to.split(":")[1])
-            free_time = free_time + (time_to_int - time_from_int)
+            free_time += time_to_int - time_from_int
         book_time = 540 - free_time
         percent = round((book_time / 540) * 100)
         y.append(percent)
 
+    # Создаем график
     plt.bar(x, y, label='Занятость')
     plt.xlabel('День')
     plt.ylabel('Занятость')
     plt.title('Занятость комнаты на протяжении месяца')
     plt.legend()
-    temp_file = "temp_graph.png"
-    plt.savefig(temp_file)
-    return templates.TemplateResponse("room.html", {"request": request, "graph_image": temp_file})
+    # Преобразуем график в изображение в формате PNG и затем в base64
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png')
+    buffer.seek(0)
+    graph_image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+    plt.close()
+    return templates.TemplateResponse("room.html", {"request": request, "graph_image": graph_image_base64})
 
 
-@app.get("/main_page")
-async def booking_recommendation(login: str, date: str):
+@app.get("/main_page", response_class=HTMLResponse)
+async def booking_recommendation(request: Request, login: str, date: str):
+    """
+    Функция для рекомендации комнат по предыдущим бронированиям.
+
+    Функция проверяет сколько раз пользователь бронировал определённую комнату, вычисляет среднее время бронирований и
+     проверяет свободна ли данная комната в этот промежуток времени. Если все условия выполнены, комната и окна,
+     в которые она свободна, запоминаются в переменную recommended_rooms. Максимум рекомендуется 3 комнаты.
+
+    Args:
+        request:
+        login: string
+        date: string (**.**.****)
+
+    Returns:
+        dict, keys = room names, values = array of strings ["**:** - **:**, ...]
+    """
     cursor.execute('SELECT room_name, time_from, time_to FROM History_of_Operations WHERE booker = ?'
                    ' AND type_of_operation = ?', (login, "booking"))
     info = cursor.fetchall()
@@ -847,7 +851,10 @@ async def booking_recommendation(login: str, date: str):
         recommended_rooms[room] = free_time
         if len(recommended_rooms) == 3:
             break
-    return recommended_rooms
+        cursor.execute('SELECT DISTINCT location FROM Rooms_Information')
+        locations = cursor.fetchall()
+        location_options = [loc[0] for loc in locations]
+    return templates.TemplateResponse("main_page.html", {"request": request, "login": login, "recommended_rooms": recommended_rooms, "location_options": location_options})
 
 
 @app.get("/notifications")

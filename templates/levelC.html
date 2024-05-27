@@ -57,26 +57,46 @@
         window.location.href = `/get_info?room_name=${room_name}`;
     }
 
-    function unbookRoom(login, room_name, date, time_from, time_to) {
-        fetch(`/user_info?login=${login}&room_name=${room_name}&date=${date}&time_from=${time_from}&time_to=${time_to}`, {
-            method: 'DELETE'
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Ошибка удаления бронирования');
-            }
-            return response.text();
-        })
-        .then(data => {
-            alert(data); // Показать сообщение об успешной отмене бронирования
-            // Перезагрузить страницу
-            location.reload();
-        })
-        .catch(error => {
-            console.error('Ошибка:', error);
-            alert('Произошла ошибка при отмене бронирования');
-        });
-    }
+   function unbookRoom(login, room_name, date, time_from, time_to) {
+    fetch(`/user_info?login=${login}&room_name=${room_name}&date=${date}&time_from=${time_from}&time_to=${time_to}`, {
+        method: 'DELETE'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Ошибка удаления бронирования');
+        }
+        return response.text();
+    })
+    .then(data => {
+        alert(data); // Показать сообщение об успешной отмене бронирования
+        // Дополнительные действия после успешной отмены бронирования, если нужно
+    })
+    .then(data => {
+    alert(data); // Показать сообщение об успешной отмене бронирования
+    // Перезагрузить страницу
+    location.reload();
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при отмене бронирования');
+    });
+}
+    function togglePopup(login) {
+    fetch(`/notifications?login=${login}`)
+    .then(response => response.json())
+    .then(data => {
+        // Display notifications to the user
+        if (data.length > 0) {
+            alert("Уведомления:\n" + data.join("\n"));
+        } else {
+            alert("У вас нет новых уведомлений.");
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка при получении уведомлений:', error);
+        // Handle error, e.g., show a message to the user
+    });
+}
 </script>
 </body>
 </html>
