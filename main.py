@@ -1,8 +1,6 @@
 import datetime
 import sqlite3
 import matplotlib.pyplot as plt
-import io
-import base64
 from fastapi import Request, Form
 from fastapi import FastAPI, HTTPException
 from passlib.context import CryptContext
@@ -11,8 +9,6 @@ from database import initialize_database
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from datetime import date
-from datetime import datetime
 
 initialize_database()
 connection = sqlite3.connect('my_database.db', check_same_thread=False)
@@ -359,7 +355,6 @@ def split_time_gaps(free_gaps, current_bookings):
         time_from = int(temp1[0]) * 60 + int(temp1[1])
         temp2 = booking[2].split(":")
         time_to = int(temp2[0]) * 60 + int(temp2[1])
-
         current_gaps = free_gaps[r_name]
         for i in range(len(current_gaps)):
             if current_gaps[i][0] <= time_from and current_gaps[i][1] >= time_to:
@@ -417,7 +412,7 @@ def conjunction_of_list(*lists):
 
 
 @app.post("/filters")
-async def filter_rooms(capacity=0, location=None, eq_proj=None, eq_board=None):
+def filter_rooms(capacity=0, location=None, eq_proj=None, eq_board=None):
     """
     Функция для фильтрации переговорных комнат
     Args:
@@ -430,42 +425,42 @@ async def filter_rooms(capacity=0, location=None, eq_proj=None, eq_board=None):
 
     """
     cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE capacity >= "{capacity}"')
-    capacity_names = cursor.fetchall()
+    cap_names = cursor.fetchall()
 
     if location is not None:
         cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE location = "{location}"')
-        location_names = cursor.fetchall()
+        loc_names = cursor.fetchall()
     else:
         cursor.execute(f'SELECT room_name FROM Rooms_Information')
-        location_names = cursor.fetchall()
+        loc_names = cursor.fetchall()
 
     if eq_proj is not None:
         if eq_proj == "NO":
             cursor.execute(f'SELECT room_name FROM Rooms_Information')
-            eq_proj_names = cursor.fetchall()
+            eq_pr_names = cursor.fetchall()
         else:
             cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE eq_proj = "{eq_proj}"')
-            eq_proj_names = cursor.fetchall()
+            eq_pr_names = cursor.fetchall()
     else:
         cursor.execute(f'SELECT room_name FROM Rooms_Information')
-        eq_proj_names = cursor.fetchall()
+        eq_pr_names = cursor.fetchall()
 
     if eq_board is not None:
         if eq_board == "NO":
             cursor.execute(f'SELECT room_name FROM Rooms_Information')
-            eq_board_names = cursor.fetchall()
+            eq_b_names = cursor.fetchall()
         else:
             cursor.execute(f'SELECT room_name FROM Rooms_Information WHERE eq_board = "{eq_board}"')
-            eq_board_names = cursor.fetchall()
+            eq_b_names = cursor.fetchall()
     else:
         cursor.execute(f'SELECT room_name FROM Rooms_Information')
-        eq_board_names = cursor.fetchall()
+        eq_b_names = cursor.fetchall()
+    capacity_names = [el[0] for el in cap_names]
+    location_names = [el[0] for el in loc_names]
+    eq_proj_names = [el[0] for el in eq_pr_names]
+    eq_board_names = [el[0] for el in eq_b_names]
     all_room_names = conjunction_of_list(capacity_names, location_names, eq_proj_names, eq_board_names)
-    if len(all_room_names) > 0:
-        all_rn = all_room_names[0]
-    else:
-        all_rn = []
-    return all_rn
+    return all_room_names
 
 
 @app.get("/free_gaps")
@@ -488,9 +483,13 @@ def get_free_gaps_for_rooms(date: str, capacity=0, location=None, eq_proj=None, 
     """
 
     all_room_names = filter_rooms(capacity, location, eq_proj, eq_board)
+    print(all_room_names)
     if len(all_room_names) > 0:
-        cursor.execute(f'SELECT room_name, time_from, time_to FROM History_of_Operations WHERE date = "{date}"')
-        current_bookings = cursor.fetchall()
+        cursor.execute(f'SELECT room_name, time_from, time_to FROM History_of_Operations WHERE date = "{date}" AND'
+                       f' type_of_operation = "booking"')
+        all_bookings = cursor.fetchall()
+
+        current_bookings = [booking for booking in all_bookings if booking[0] in all_room_names]
 
         free_gaps = dict()
         for r_name in all_room_names:
@@ -549,7 +548,7 @@ def get_free_gaps_for_one_room(date: str, room_name: str):
         dict, keys = room names, values = array of strings ["**:** - **:**, ...]
     """
     cursor.execute(f'SELECT room_name, time_from, time_to FROM History_of_Operations WHERE date = "{date}" AND '
-                   f'room_name = "{room_name}"')
+                   f'room_name = "{room_name}" AND type_of_operation = "booking"')
     current_bookings = cursor.fetchall()
     free_gaps = dict()
     free_gaps[room_name] = [[540, 1080], ]
@@ -758,6 +757,7 @@ def access_permission(type_of_operation: str, login: str):
     """
     cursor.execute('SELECT pass_level FROM Users WHERE login = ?', (login,))
     role = cursor.fetchone()
+    print(role)
     if type_of_operation in ("booking", "unbooking") and role[0] < 'B':
         raise NotEnoughRights(status_code=404, detail="User hasn`t enough rights")
     elif type_of_operation in ("unbooking other user", "adding room") and role[0] < 'C':
@@ -867,10 +867,10 @@ async def booking_recommendation(request: Request, login: str, date: str = None)
                                       {"request": request, "login": login, "recommended_rooms": recommended_rooms,
                                        "location_options": location_options, "room_data": room_data})
 
-  
+
 @app.get("/notifications")
 async def notifications(login: str):
-    today = date.today()
+    today = datetime.date.today()
     d = str(today).split("-")
     cur_day = d[2]
     cur_mon = d[1]
