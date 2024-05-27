@@ -133,7 +133,10 @@ def fill_history_of_operations_table(cursor, num_users=10):
 
         # Генерация времени только с 9 утра до 18 вечера
         time_from = generate_time_in_range("09:00", "17:59")
-        time_to = generate_time_in_range(time_from, "17:59")
+        while True:
+            time_to = generate_time_in_range("09:01", "17:59")
+            if time_from < time_to:
+                break
 
         cursor.execute(
             "INSERT INTO History_of_Operations (room_name, type_of_operation, booker, date, time_from, "
