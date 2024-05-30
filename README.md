@@ -1,4 +1,4 @@
-[jbf](https://github.com/al1vel/itproject/blob/master/templates/static/home.png)
+[https://github.com/al1vel/itproject/blob/master/templates/static/home.png]
 # WEB-сервис для бронирования комнат в офисе
 
 ### Описание проекта
